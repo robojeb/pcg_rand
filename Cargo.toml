@@ -1,4 +1,16 @@
 [package]
 name = "pcg_rand"
 version = "0.1.0"
-authors = ["Jeb Brooks <robojeb@gmail.com>"]
+authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
+
+[lib]
+name = "pcg_rand"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pcg_main"
+path = "src/bin.rs"
+
+[dependencies]
+
+rand = "0.3.11"

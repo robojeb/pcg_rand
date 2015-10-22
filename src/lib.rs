@@ -1,6 +1,6 @@
 extern crate rand;
 
-use rand::{Rng, Rand};
+use rand::{Rng, Rand, SeedableRng};
 
 use std::num::Wrapping;
 
@@ -32,6 +32,21 @@ impl Rng for Pcg32Basic {
 
         //Produce the permuted output
         (xorshifted >> rot) | (xorshifted << ((-(rot as i32)) & 31))
+    }
+}
+
+//Allow seeding of Pcg32Basic
+impl SeedableRng<[u64; 2]> for Pcg32Basic {
+    fn reseed(&mut self, seed: &mut [u64; 2]) {
+        self.state = seed[0];
+        self.inc   = seed[1];
+    }
+
+    fn from_seed(seed: [u64; 2]) -> Pcg32Basic {
+        Pcg32Basic {
+            state : seed[0],
+            inc   : seed[1],
+        }
     }
 }
 

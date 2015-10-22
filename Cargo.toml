@@ -1,0 +1,4 @@
+[package]
+name = "pcg_rand"
+version = "0.1.0"
+authors = ["Jeb Brooks <robojeb@gmail.com>"]

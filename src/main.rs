@@ -22,11 +22,11 @@ extern crate pcg_rand;
 extern crate rand;
 
 use rand::{Rng, OsRng};
-use pcg_rand::{Pcg32_basic, Pcg32Unique};
+use pcg_rand::{Pcg32Basic, Pcg32Unique};
 
 
 fn main() {
-    let mut rng = Pcg32_basic::new_unseeded();
+    let mut rng = Pcg32Basic::new_unseeded();
 
     // print a bunch of random numbers
     println!("Here is the generator recovering from a (0,0) initialization: ");
@@ -34,7 +34,7 @@ fn main() {
         println!("{: ^25}|{: ^25}|{: ^25}", rng.gen::<u32>(), rng.gen::<u32>(), rng.gen::<u32>());
     }
 
-    let mut rng : Pcg32_basic = OsRng::new().unwrap().gen();
+    let mut rng : Pcg32Basic = OsRng::new().unwrap().gen();
     println!("\nHere is the generator with random seed and increment: ");
     for _ in 0..7 {
         println!("{: ^25}|{: ^25}|{: ^25}", rng.gen::<u32>(), rng.gen::<u32>(), rng.gen::<u32>());

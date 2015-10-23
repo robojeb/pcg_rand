@@ -58,6 +58,7 @@ pub struct SpecificSeqStream<Itype> {
 macro_rules! specific_new {
     ( $($t:ty),*) => {
         $(impl SpecificSeqStream<$t> {
+            #[allow(dead_code)]
             pub fn new() -> SpecificSeqStream<$t> {
                 SpecificSeqStream{inc: 1}
             }

@@ -36,23 +36,23 @@ macro_rules! make_Xsh_Rs_mixins {
             fn output(&self, state : $it) -> $xt {
                 let mut state = state;
 
-                const bits : usize= $ibits;
-                const xtypebits : usize= $xbits;
-                const sparebits : usize = bits - xtypebits;
+                const BITS : usize= $ibits;
+                const XTYPEBITS : usize= $xbits;
+                const SPAREBITS : usize = BITS - XTYPEBITS;
                 //Have to use "let" right now because if complains when used in a const context
-                let opbits : usize = if sparebits-5 >= 64 { 5 } else
-                             if sparebits-4 >= 32 { 4 } else
-                             if sparebits-3 >= 16 { 3 } else
-                             if sparebits-2 >= 4  { 2 } else
-                             if sparebits-1 >= 1  { 1 } else { 0 };
+                let opbits : usize = if SPAREBITS-5 >= 64 { 5 } else
+                             if SPAREBITS-4 >= 32 { 4 } else
+                             if SPAREBITS-3 >= 16 { 3 } else
+                             if SPAREBITS-2 >= 4  { 2 } else
+                             if SPAREBITS-1 >= 1  { 1 } else { 0 };
                 let mask = (1 << opbits) - 1;
                 let maxrandshift = mask;
                 let topspare = opbits;
-                let bottomspare = sparebits - topspare;
-                let xshift = topspare + (xtypebits+maxrandshift)/2;
+                let bottomspare = SPAREBITS - topspare;
+                let xshift = topspare + (XTYPEBITS+maxrandshift)/2;
                 //Now we start real computation. Everything above was constexpr in the
                 //C++ code originally
-                let rshift = if opbits != 0 { (state >> (bits - opbits)) as usize & mask }
+                let rshift = if opbits != 0 { (state >> (BITS - opbits)) as usize & mask }
                     else { 0 };
 
                 state ^= state >> xshift;
@@ -77,24 +77,24 @@ macro_rules! make_Xsh_Rr_mixins {
             fn output(&self, state : $it) -> $xt {
                 let mut state = state;
 
-                const bits : usize= $ibits;
-                const xtypebits : usize= $xbits;
-                const sparebits : usize = bits - xtypebits;
+                const BITS : usize= $ibits;
+                const XTYPEBITS : usize= $xbits;
+                const SPAREBITS : usize = BITS - XTYPEBITS;
                 //Have to use "let" right now because if complains when used in a const context
-                let wantedopbits : usize = if xtypebits >= 128 { 7 } else
-                             if xtypebits >= 64 { 6 } else
-                             if xtypebits >= 32 { 5 } else
-                             if xtypebits >= 16 { 4 } else { 3 };
+                let wantedopbits : usize = if XTYPEBITS >= 128 { 7 } else
+                             if XTYPEBITS >= 64 { 6 } else
+                             if XTYPEBITS >= 32 { 5 } else
+                             if XTYPEBITS >= 16 { 4 } else { 3 };
 
-                let opbits = if sparebits >= wantedopbits { wantedopbits } else { sparebits };
+                let opbits = if SPAREBITS >= wantedopbits { wantedopbits } else { SPAREBITS };
                 let amplifier = wantedopbits - opbits;
                 let mask = (1 << opbits) - 1;
                 let topspare = opbits;
-                let bottomspare = sparebits - topspare;
-                let xshift = (topspare + xtypebits)/2;
+                let bottomspare = SPAREBITS - topspare;
+                let xshift = (topspare + XTYPEBITS)/2;
 
                 //Begin math from the C++
-                let rot = if opbits != 0 { (state >> (bits - opbits)) as usize & mask } else {0};
+                let rot = if opbits != 0 { (state >> (BITS - opbits)) as usize & mask } else {0};
                 let amprot = (rot << amplifier) & mask;
                 state ^= state >> xshift;
                 let result : $xt = (state >> bottomspare) as $xt;

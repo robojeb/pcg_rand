@@ -47,8 +47,37 @@
 //! [dependencies]
 //! pcg_rand = "0.2.0"
 //! ```
+//! #Typename Nomenclature
+//! This library attempts to simplify using the PCG generators by defining easy
+//! types for use. The following attempts to help you decode these typenames
 //!
+//! Consider the example `OneseqXshRr6432`. This consists of 4 major parts.
 //!
+//! 1. First is the sequence type
+//! 1. Second is the permutation function
+//! 1. Third is the state size in bits
+//! 1. Fourth is the output size in bits
+//!
+//! ## Sequence types
+//!
+//! This library provides the following sequence types
+//!
+//! * `Setseq`: This is a settable stream. The random number stream can be set manually.
+//! * `Unique`: This is a unique stream. Each instance of this type will be given a unique stream
+//!   that cannot be modified.
+//! * `Oneseq`: This is one fixed random sequence. It is hardcoded into the library and should be
+//!   good enough to give good "randomness".
+//! * `Mcg`: This has no random sequence it degenerates the internal LCG into a MCG. This is for
+//!   speed.
+//!
+//! ## Permutation functions
+//!
+//! There are many possible permuation functions that this library can implement. Many of them are
+//! composed of several indiviual components. The components that are used are:
+//!
+//! * `Xsh`: Refers to a High Xorshift function.
+//! * `Rr`: Refers to a random rotation. Randomly rotates based on entropy from the state.
+//! * `Rs`: Refers to a random shift. Randomly shifts based on entropy from the state.
 
 
 extern crate rand;
@@ -61,8 +90,8 @@ mod stream;
 mod multiplier;
 mod outputmix;
 
-use stream::{Stream, OneSeqStream, SpecificSeqStream, UniqueSeqStream};
-use multiplier::{Multiplier, DefaultMultiplier};
+use stream::{Stream, OneSeqStream, SpecificSeqStream, UniqueSeqStream, NoSeqStream};
+use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 
 use std::marker::PhantomData;
@@ -157,7 +186,9 @@ build_basic_pcg!(
     OneseqXshRs6432, u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin;
     UniqueXshRs6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin;
     OneseqXshRr6432, u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin;
-    UniqueXshRr6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin
+    UniqueXshRr6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin;
+    McgXshRs6432,    u64, u32, NoSeqStream, McgMultiplier, XshRsMixin;
+    McgXshRr6432,    u64, u32, NoSeqStream, McgMultiplier, XshRrMixin
 );
 
 build_sequence_pcg!(
@@ -171,6 +202,12 @@ pub type Pcg32       = SetseqXshRr6432;
 pub type Pcg32Oneseq = OneseqXshRr6432;
 /// A helper definition for a 32bit PCG which has a unique random stream for each instance
 pub type Pcg32Unique = UniqueXshRr6432;
+/// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
+///
+/// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
+/// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
+/// compiler can optimize and reduce the number of operations.
+pub type Pcg32Fast = McgXshRs6432;
 
 /*
  * The simple C minimal implementation of PCG32
@@ -181,22 +218,22 @@ pub type Pcg32Unique = UniqueXshRr6432;
 ///This is mostly useful for demonstrating how PCG works.
 ///If you want better statistical performance you should use one of the predefined types like
 ///`Pcg32`.
-pub struct Pcg32_basic {
+pub struct Pcg32Basic {
     state : u64,
     inc   : u64,
 }
 
-impl Pcg32_basic {
-    pub fn new_unseeded() -> Pcg32_basic {
-        Pcg32_basic{
+impl Pcg32Basic {
+    pub fn new_unseeded() -> Pcg32Basic {
+        Pcg32Basic{
             state : 0,
             inc : 1,
         }
     }
 }
 
-//Pcg32_basic is an rng
-impl Rng for Pcg32_basic {
+//Pcg32Basic is an rng
+impl Rng for Pcg32Basic {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = Wrapping(self.state);
@@ -212,25 +249,25 @@ impl Rng for Pcg32_basic {
     }
 }
 
-//Allow seeding of Pcg32_basic
-impl SeedableRng<[u64; 2]> for Pcg32_basic {
+//Allow seeding of Pcg32Basic
+impl SeedableRng<[u64; 2]> for Pcg32Basic {
     fn reseed(&mut self, seed: [u64; 2]) {
         self.state = seed[0];
         self.inc   = seed[1];
     }
 
-    fn from_seed(seed: [u64; 2]) -> Pcg32_basic {
-        Pcg32_basic {
+    fn from_seed(seed: [u64; 2]) -> Pcg32Basic {
+        Pcg32Basic {
             state : seed[0],
             inc   : seed[1],
         }
     }
 }
 
-//Pcg32_basic can be randomly initialized with system entropy (or any other RNG)
-impl Rand for Pcg32_basic {
-    fn rand<R: Rng>(other: &mut R) -> Pcg32_basic {
-        Pcg32_basic{
+//Pcg32Basic can be randomly initialized with system entropy (or any other RNG)
+impl Rand for Pcg32Basic {
+    fn rand<R: Rng>(other: &mut R) -> Pcg32Basic {
+        Pcg32Basic{
             state : other.gen(),
             inc   : other.gen(),
         }

@@ -41,10 +41,28 @@ macro_rules! make_default_mul {
     }
 }
 
-
 make_default_mul!(
     u8 => 141u8;
     u16 => 12829u16;
     u32 => 747796405u32;
     u64 => 6364136223846793005u64
+);
+
+pub struct McgMultiplier;
+
+macro_rules! make_mcg_mul {
+    ( $( $t:ty => $e:expr);* ) => {
+        $(impl Multiplier<$t> for McgMultiplier {
+            fn multiplier(&self) -> $t {
+                $e
+            }
+        })*
+    }
+}
+
+make_mcg_mul!(
+    u8 => 217u8;
+    u16 => 62169u16;
+    u32 => 277803737u32;
+    u64 => 12605985483714917081u64
 );

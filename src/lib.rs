@@ -1,3 +1,29 @@
+/*
+ * PCG Random Number Generation for Rust
+ *
+ * Copyright 2015 John Brooks <robojeb@robojeb.xyz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * This work is derived from the implementation PCG RNG for C++ by
+ * Melissa O'Neill.
+ *
+ * For additional information about the PCG random number generation scheme,
+ * including its license and other licensing options, visit
+ *
+ *     http://www.pcg-random.org
+ */
+
 extern crate rand;
 
 use rand::{Rng, Rand, SeedableRng};
@@ -116,17 +142,17 @@ pub struct Pcg32_basic {
     inc   : u64,
 }
 
-impl Pcg32Basic {
-    pub fn new_unseeded() -> Pcg32Basic {
-        Pcg32Basic{
+impl Pcg32_basic {
+    pub fn new_unseeded() -> Pcg32_basic {
+        Pcg32_basic{
             state : 0,
             inc : 0,
         }
     }
 }
 
-//Pcg32Basic is an rng
-impl Rng for Pcg32Basic {
+//Pcg32_basic is an rng
+impl Rng for Pcg32_basic {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = Wrapping(self.state);
@@ -142,25 +168,25 @@ impl Rng for Pcg32Basic {
     }
 }
 
-//Allow seeding of Pcg32Basic
-impl SeedableRng<[u64; 2]> for Pcg32Basic {
+//Allow seeding of Pcg32_basic
+impl SeedableRng<[u64; 2]> for Pcg32_basic {
     fn reseed(&mut self, seed: [u64; 2]) {
         self.state = seed[0];
         self.inc   = seed[1];
     }
 
-    fn from_seed(seed: [u64; 2]) -> Pcg32Basic {
-        Pcg32Basic {
+    fn from_seed(seed: [u64; 2]) -> Pcg32_basic {
+        Pcg32_basic {
             state : seed[0],
             inc   : seed[1],
         }
     }
 }
 
-//Pcg32Basic can be randomly initialized with system entropy (or any other RNG)
-impl Rand for Pcg32Basic {
-    fn rand<R: Rng>(other: &mut R) -> Pcg32Basic {
-        Pcg32Basic{
+//Pcg32_basic can be randomly initialized with system entropy (or any other RNG)
+impl Rand for Pcg32_basic {
+    fn rand<R: Rng>(other: &mut R) -> Pcg32_basic {
+        Pcg32_basic{
             state : other.gen(),
             inc   : other.gen(),
         }

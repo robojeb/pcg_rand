@@ -18,3 +18,16 @@ Future Work
 
 * Implement more generator types
 * Implement seeking for the generators
+
+
+Limiting Factors
+----------------
+
+None of the 64 bit PCG generators can be implemented without a u128
+implementation. This is waiting on either extprim stabilizing or OverflowingOps
+being stabilized. (Or for me to figure out how to write one myself, or use a
+  C/C++ library)
+
+This doesn't prevent the generators in this library from producing 64bit values
+(because Rust's Rng provides an adaptor) but it does reduce the period of the
+generators.

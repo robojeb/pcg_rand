@@ -6,11 +6,13 @@ authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 homepage = "https://robojeb.xyz/git/jeb/pcg_rand"
 repository = "https://robojeb.xyz/git/jeb/pcg_rand"
 
-license = "Apache 2.0"
+license = "Apache-2.0"
 
 keywords = ["rand", "pcg"]
 
 readme = "README.md"
+
+description = "An implementation of the PCG family of random number generators in pure Rust"
 
 [lib]
 name = "pcg_rand"

@@ -17,12 +17,12 @@
  *
  */
 
- 
+
 extern crate pcg_rand;
 extern crate rand;
 
 use rand::{Rng, OsRng};
-use pcg_rand::{Pcg32_basic, Pcg32_unique};
+use pcg_rand::{Pcg32_basic, Pcg32Unique};
 
 
 fn main() {
@@ -48,8 +48,8 @@ fn main() {
     let mut urng1 = Pcg32_unique::new_unseeded();
     let mut urng2 = Pcg32_unique::new_unseeded();
     ");
-    let mut urng1 = Pcg32_unique::new_unseeded();
-    let mut urng2 = Pcg32_unique::new_unseeded();
+    let mut urng1 = Pcg32Unique::new_unseeded();
+    let mut urng2 = Pcg32Unique::new_unseeded();
     println!("{: ^25}|{: ^25}", "Generator 1", "Generator2");
     for _ in 0..25 {
         println!("{: ^25}|{: ^25}", urng1.gen::<u32>(), urng2.gen::<u32>());

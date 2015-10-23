@@ -59,7 +59,7 @@ macro_rules! specific_new {
     ( $($t:ty),*) => {
         $(impl SpecificSeqStream<$t> {
             pub fn new() -> SpecificSeqStream<$t> {
-                SpecificSeqStream{inc: 0}
+                SpecificSeqStream{inc: 1}
             }
         }
 

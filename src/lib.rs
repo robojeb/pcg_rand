@@ -24,6 +24,33 @@
  *     http://www.pcg-random.org
  */
 
+//! An implementation of the PCG random family of random number generators.
+//! Details about the PCG generators can be found at [pcg-random.org](http://pcg-random.org)
+//!
+//! Currently this library provides several PCG generators:
+//!
+//! * `Pcg32` : 64bit LCG with an xorshift and right rotation applied to the output. To improve
+//!   security only 32bits of the state are reported as output.
+//! * `Pcg32Onseq` : Same as `Pcg32` but with a fixed sequence. Useful if you don't care about having
+//!   multiple streams of random numbers from the same seed.
+//! * `Pcg32Unique` : Same as `Pcg32` but the sequence is set by the memory location of the RNG
+//!   This means that multiple `Pcg32_unique` with the same seed will produce different sequences
+//!   of numbers.
+//!
+//!
+//! # Usage
+//!
+//! This crate is [on crates.io](https://crates.io/crates/pcg_rand) and can be used by
+//! adding the `pcg_rand` crate to your projects Cargo.toml
+//!
+//! ```toml
+//! [dependencies]
+//! pcg_rand = "0.2.0"
+//! ```
+//!
+//!
+
+
 extern crate rand;
 
 use rand::{Rng, Rand, SeedableRng};
@@ -40,7 +67,10 @@ use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 
 use std::marker::PhantomData;
 
-
+/// A generic PCG structure.
+///
+/// This structure allows the building of many types of PCG generators by using various
+/// Mixins for both the stream, multiplier, and permutation function.
 pub struct PcgEngine<Itype, Xtype,
     StreamMix : Stream<Itype>,
     MulMix : Multiplier<Itype>,
@@ -56,9 +86,12 @@ pub struct PcgEngine<Itype, Xtype,
 macro_rules! build_basic_pcg {
     ( $($name:ident, $itype:ty, $xtype:ty, $seq:ident, $mul:ident, $out:ident);* ) => (
         $(
+            /// A helper definition for a PcgEngine with parameters defined in the name
             pub type $name = PcgEngine<$itype, $xtype, $seq, $mul, $out>;
 
             impl $name {
+                /// Creates a new unseeded PCG
+                /// This will have state 0 and a sequence based on its sequence type
                 pub fn new_unseeded() -> $name {
                     PcgEngine{
                         state      : 0,
@@ -88,9 +121,12 @@ macro_rules! build_basic_pcg {
 macro_rules! build_sequence_pcg {
     ( $($name:ident, $itype:ty, $xtype:ty, $seq:ident, $mul:ident, $out:ident);* ) => (
         $(
+            /// A helper definition for a PcgEngine with parameters defined in the name
             pub type $name = PcgEngine<$itype, $xtype, $seq<$itype>, $mul, $out>;
 
             impl $name {
+                /// Creates a new unseeded PCG
+                /// This will have state 0 and sequence 1
                 pub fn new_unseeded() -> $name {
                     PcgEngine{
                         state      : 0,
@@ -118,25 +154,33 @@ macro_rules! build_sequence_pcg {
 }
 
 build_basic_pcg!(
-    oneseq_xsh_rs_64_32, u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin;
-    unique_xsh_rs_64_32, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin;
-    oneseq_xsh_rr_64_32, u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin;
-    unique_xsh_rr_64_32, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin
+    OneseqXshRs6432, u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin;
+    UniqueXshRs6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin;
+    OneseqXshRr6432, u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin;
+    UniqueXshRr6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin
 );
 
 build_sequence_pcg!(
-    setseq_xsh_rs_64_32, u64, u32, SpecificSeqStream, DefaultMultiplier, XshRsMixin;
-    setseq_xsh_rr_64_32, u64, u32, SpecificSeqStream, DefaultMultiplier, XshRrMixin
+    SetseqXshRs6432, u64, u32, SpecificSeqStream, DefaultMultiplier, XshRsMixin;
+    SetseqXshRr6432, u64, u32, SpecificSeqStream, DefaultMultiplier, XshRrMixin
 );
 
-pub type Pcg32        = setseq_xsh_rr_64_32;
-pub type Pcg32_oneseq = oneseq_xsh_rr_64_32;
-pub type Pcg32_unique = unique_xsh_rr_64_32;
+/// A helper definition for a simple 32bit PCG which can have multiple random streams
+pub type Pcg32       = SetseqXshRr6432;
+/// A helper definition for a 32bit PCG which hase a fixed good random stream
+pub type Pcg32Oneseq = OneseqXshRr6432;
+/// A helper definition for a 32bit PCG which has a unique random stream for each instance
+pub type Pcg32Unique = UniqueXshRr6432;
 
 /*
  * The simple C minimal implementation of PCG32
  */
 
+///A low overhead very simple PCG impementation
+///
+///This is mostly useful for demonstrating how PCG works.
+///If you want better statistical performance you should use one of the predefined types like
+///`Pcg32`.
 pub struct Pcg32_basic {
     state : u64,
     inc   : u64,
@@ -146,7 +190,7 @@ impl Pcg32_basic {
     pub fn new_unseeded() -> Pcg32_basic {
         Pcg32_basic{
             state : 0,
-            inc : 0,
+            inc : 1,
         }
     }
 }

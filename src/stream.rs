@@ -56,11 +56,13 @@ pub struct SpecificSeqStream<Itype> {
 }
 
 macro_rules! specific_new {
-    ( $($t:ty),*) => {
+    ( $($t:ty => $e:expr);*) => {
         $(impl SpecificSeqStream<$t> {
             #[allow(dead_code)]
             pub fn new() -> SpecificSeqStream<$t> {
-                SpecificSeqStream{inc: 1}
+                //We use a default good sequence so a default initialized
+                //version of SpecificSeqStream is the same as OneSeqStream
+                SpecificSeqStream{inc: $e}
             }
         }
 
@@ -68,7 +70,12 @@ macro_rules! specific_new {
     }
 }
 
-specific_new!(u8, u16, u32, u64);
+specific_new!(
+    u8  => 77u8; //These are probably useless in rust
+    u16 => 47989u16; // ^
+    u32 => 2891336453u32;
+    u64 => 1442695040888963407u64
+);
 
 
 

@@ -143,6 +143,34 @@ macro_rules! build_basic_pcg {
                     self.out_mix.output(oldstate.0)
                 }
             }
+
+            impl Rand for $name {
+                fn rand<R: Rng>(other: &mut R) -> $name {
+                    PcgEngine{
+                        state      : other.gen(),
+                        stream_mix : $seq::new(),
+                        mul_mix    : $mul,
+                        out_mix    : $out,
+                        phantom    : PhantomData::<$xtype>,
+                    }
+                }
+            }
+
+            impl SeedableRng<$itype> for $name {
+                fn reseed(&mut self, seed: $itype) {
+                    self.state = seed;
+                }
+
+                fn from_seed(seed: $itype) -> $name {
+                    PcgEngine{
+                        state      : seed,
+                        stream_mix : $seq::new(),
+                        mul_mix    : $mul,
+                        out_mix    : $out,
+                        phantom    : PhantomData::<$xtype>,
+                    }
+                }
+            }
         )*
     )
 }
@@ -165,6 +193,10 @@ macro_rules! build_sequence_pcg {
                         phantom    : PhantomData::<$xtype>,
                     }
                 }
+
+                pub fn set_stream(&mut self, stream : $itype) {
+                    self.stream_mix.set_stream(stream);
+                }
             }
 
             impl Rng for $name {
@@ -176,6 +208,55 @@ macro_rules! build_sequence_pcg {
                     self.state = (oldstate * mul + inc).0;
 
                     self.out_mix.output(oldstate.0)
+                }
+            }
+
+            impl Rand for $name {
+                fn rand<R: Rng>(other: &mut R) -> $name {
+                    let mut stream_mix = $seq::<$itype>::new();
+                    stream_mix.set_stream(other.gen());
+                    PcgEngine{
+                        state      : other.gen(),
+                        stream_mix : stream_mix,
+                        mul_mix    : $mul,
+                        out_mix    : $out,
+                        phantom    : PhantomData::<$xtype>,
+                    }
+                }
+            }
+
+            impl SeedableRng<[$itype; 2]> for $name {
+                fn reseed(&mut self, seed: [$itype; 2]) {
+                    self.state = seed[0];
+                    self.stream_mix.set_stream(seed[0]);
+                }
+
+                fn from_seed(seed: [$itype; 2]) -> $name {
+                    let mut stream_mix = $seq::<$itype>::new();
+                    stream_mix.set_stream(seed[1]);
+                    PcgEngine{
+                        state      : seed[0],
+                        stream_mix : stream_mix,
+                        mul_mix    : $mul,
+                        out_mix    : $out,
+                        phantom    : PhantomData::<$xtype>,
+                    }
+                }
+            }
+
+            impl SeedableRng<$itype> for $name {
+                fn reseed(&mut self, seed: $itype) {
+                    self.state = seed;
+                }
+
+                fn from_seed(seed: $itype) -> $name {
+                    PcgEngine{
+                        state      : seed,
+                        stream_mix : $seq::<$itype>::new(),
+                        mul_mix    : $mul,
+                        out_mix    : $out,
+                        phantom    : PhantomData::<$xtype>,
+                    }
                 }
             }
         )*

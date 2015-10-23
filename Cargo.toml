@@ -1,10 +1,11 @@
 [package]
 name = "pcg_rand"
-version = "0.2.0"
+version = "0.3.1"
 authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 
 homepage = "https://robojeb.xyz/git/jeb/pcg_rand"
 repository = "https://robojeb.xyz/git/jeb/pcg_rand"
+documentation = "https://robojeb.xyz/doc/pcg_rand"
 
 license = "Apache-2.0"
 

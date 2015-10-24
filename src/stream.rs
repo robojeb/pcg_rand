@@ -44,6 +44,7 @@ impl OneSeqStream {
 macro_rules! make_one_seq {
     ( $( $t:ty => $e:expr);* ) => {
         $(impl Stream<$t> for OneSeqStream {
+            #[inline]
             fn increment(&self) -> $t {
                 $e
             }
@@ -86,6 +87,7 @@ macro_rules! make_specific_seq {
                 self.inc = (stream_seq << 1) | 1;
             }
 
+            #[inline]
             fn increment(&self) -> $t {
                 self.inc
             }
@@ -105,6 +107,7 @@ impl UniqueSeqStream {
 macro_rules! make_unique_seq {
     ( $($t:ty),* ) => {
         $(impl Stream<$t> for UniqueSeqStream {
+            #[inline]
             fn increment(&self) -> $t {
                 let inc = self as *const UniqueSeqStream;
                 inc as $t | 1
@@ -126,6 +129,7 @@ impl NoSeqStream {
 macro_rules! make_no_seq {
     ( $($t:ty),* ) => {
         $(impl Stream<$t> for NoSeqStream {
+            #[inline]
             fn increment(&self) -> $t {
                 0
             }

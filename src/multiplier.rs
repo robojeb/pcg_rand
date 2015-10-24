@@ -34,6 +34,7 @@ pub struct DefaultMultiplier;
 macro_rules! make_default_mul {
     ( $( $t:ty => $e:expr);* ) => {
         $(impl Multiplier<$t> for DefaultMultiplier {
+            #[inline]
             fn multiplier(&self) -> $t {
                 $e
             }
@@ -53,6 +54,7 @@ pub struct McgMultiplier;
 macro_rules! make_mcg_mul {
     ( $( $t:ty => $e:expr);* ) => {
         $(impl Multiplier<$t> for McgMultiplier {
+            #[inline]
             fn multiplier(&self) -> $t {
                 $e
             }

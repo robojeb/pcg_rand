@@ -33,6 +33,7 @@ pub struct XshRsMixin;
 macro_rules! make_Xsh_Rs_mixins {
     ( $( $it:ty, $xt:ty, $ibits:expr, $xbits:expr);*) => {
         $(impl OutputMixin<$it, $xt> for XshRsMixin {
+            #[inline]
             fn output(&self, state : $it) -> $xt {
                 let mut state = state;
 
@@ -74,6 +75,7 @@ pub struct XshRrMixin;
 macro_rules! make_Xsh_Rr_mixins {
     ( $( $it:ty, $xt:ty, $ibits:expr, $xbits:expr);*) => {
         $(impl OutputMixin<$it, $xt> for XshRrMixin {
+            #[inline]
             fn output(&self, state : $it) -> $xt {
                 let mut state = state;
 

@@ -35,7 +35,9 @@
 //!   multiple streams of random numbers from the same seed.
 //! * `Pcg32Unique` : Same as `Pcg32` but the sequence is set by the memory location of the RNG
 //!   This means that multiple `Pcg32_unique` with the same seed will produce different sequences
-//!   of numbers.
+//!   of numbers. *NOTE*: This means that you may not get consistant results across runs of your
+//!   program. If the memory location of your PCG moves for any reason such as the state of the
+//!   allocator being different you will get a different stream of numbers.
 //!
 //!
 //! # Usage
@@ -45,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pcg_rand = "0.3.1"
+//! pcg_rand = "0.3.2"
 //! ```
 //! #Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy

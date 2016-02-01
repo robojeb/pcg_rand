@@ -25,6 +25,7 @@ use rand::{Rng, OsRng};
 use pcg_rand::{Pcg32Basic, Pcg32Unique};
 
 
+#[cfg(not(test))]
 fn main() {
     let mut rng = Pcg32Basic::new_unseeded();
 

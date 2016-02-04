@@ -218,7 +218,7 @@ macro_rules! build_sequence_pcg {
                 }
 
                 /// Builds a PCG from a saved state
-                pub fn new_from_state(&self, values: [$itype; 2]) -> $name {
+                pub fn new_from_state(values: [$itype; 2]) -> $name {
                     let stream = $seq::<$itype>::new_with_value(values[1]);
                     PcgEngine {
                         state      : values[0],

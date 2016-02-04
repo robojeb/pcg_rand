@@ -80,6 +80,7 @@
 //! * `Xsh`: Refers to a High Xorshift function.
 //! * `Rr`: Refers to a random rotation. Randomly rotates based on entropy from the state.
 //! * `Rs`: Refers to a random shift. Randomly shifts based on entropy from the state.
+//!
 
 
 extern crate rand;
@@ -118,7 +119,7 @@ macro_rules! build_basic_pcg {
     ( $($name:ident, $itype:ty, $xtype:ty, $seq:ident, $mul:ident, $out:ident);* ) => (
         $(
             /// A helper definition for a PcgEngine with parameters defined in the name
-            pub type $name = PcgEngine<$itype, $xtype, $seq, $mul, $out>;
+            pub type $name = PcgEngine<$itype, $xtype, $seq<$itype>, $mul, $out>;
 
             impl $name {
                 /// Creates a new unseeded PCG
@@ -126,11 +127,19 @@ macro_rules! build_basic_pcg {
                 pub fn new_unseeded() -> $name {
                     PcgEngine{
                         state      : 0,
-                        stream_mix : $seq::new(),
+                        stream_mix : $seq::<$itype>::new(),
                         mul_mix    : $mul,
                         out_mix    : $out,
                         phantom    : PhantomData::<$xtype>,
                     }
+                }
+
+                /// Gets the internal state and increment of the generator.
+                /// useful for stopping and resuming the generator.
+                /// NOTE: rebuilding the generator will only work if you use the same multiplier
+                /// and output mixin when rebuilding
+                pub fn get_state(&self) -> [$itype; 2] {
+                    return [self.state, self.stream_mix.get_stream()];
                 }
             }
 
@@ -198,6 +207,26 @@ macro_rules! build_sequence_pcg {
 
                 pub fn set_stream(&mut self, stream : $itype) {
                     self.stream_mix.set_stream(stream);
+                }
+
+                /// Gets the internal state and increment of the generator.
+                /// useful for stopping and resuming the generator.
+                /// NOTE: rebuilding the generator will only work if you use the same multiplier
+                /// and output mixin when rebuilding
+                pub fn get_state(&self) -> [$itype; 2] {
+                    return [self.state, self.stream_mix.get_stream()];
+                }
+
+                /// Builds a PCG from a saved state
+                pub fn new_from_state(&self, values: [$itype; 2]) -> $name {
+                    let stream = $seq::<$itype>::new_with_value(values[1]);
+                    PcgEngine {
+                        state      : values[0],
+                        stream_mix : stream,
+                        mul_mix    : $mul,
+                        out_mix    : $out,
+                        phantom    : PhantomData::<$xtype>,
+                    }
                 }
             }
 

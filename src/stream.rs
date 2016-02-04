@@ -24,28 +24,40 @@
  *     http://www.pcg-random.org
  */
 
+use std::marker::PhantomData;
+
 pub trait Stream<Itype> {
     fn set_stream(&mut self, _stream_seq : Itype){
         panic!("Stream setting unimplemented for this stream type");
     }
 
     fn increment(&self) -> Itype;
+
+    fn get_stream(&self) -> Itype;
 }
 
 //Definitions of the sequence types
-pub struct OneSeqStream;
+pub struct OneSeqStream<IType>{
+    phantom    : PhantomData<IType>
+}
 
-impl OneSeqStream {
-    pub fn new() -> OneSeqStream {
-        OneSeqStream
+impl<IType> OneSeqStream<IType> {
+    pub fn new() -> OneSeqStream<IType> {
+        OneSeqStream {
+            phantom : PhantomData::<IType>,
+        }
     }
 }
 
 macro_rules! make_one_seq {
     ( $( $t:ty => $e:expr);* ) => {
-        $(impl Stream<$t> for OneSeqStream {
+        $(impl Stream<$t> for OneSeqStream<$t> {
             #[inline]
             fn increment(&self) -> $t {
+                $e
+            }
+
+            fn get_stream(&self) -> $t {
                 $e
             }
         })*
@@ -64,6 +76,11 @@ macro_rules! specific_new {
                 //We use a default good sequence so a default initialized
                 //version of SpecificSeqStream is the same as OneSeqStream
                 SpecificSeqStream{inc: $e}
+            }
+
+            #[allow(dead_code)]
+            pub fn new_with_value(v : $t) -> SpecificSeqStream<$t> {
+                SpecificSeqStream{inc: v}
             }
         }
 
@@ -91,26 +108,54 @@ macro_rules! make_specific_seq {
             fn increment(&self) -> $t {
                 self.inc
             }
+
+            fn get_stream(&self) -> $t {
+                self.inc
+            }
         })*
     }
 }
 
+use std::cell::Cell;
 
-pub struct UniqueSeqStream;
+pub struct UniqueSeqStream<IType> {
+    inc : Cell<Option<IType>>,
+}
 
-impl UniqueSeqStream {
-    pub fn new() -> UniqueSeqStream {
-        UniqueSeqStream
+impl<IType: Copy> UniqueSeqStream<IType> {
+    pub fn new() -> UniqueSeqStream<IType> {
+        UniqueSeqStream {
+            inc : Cell::new(None)
+        }
     }
 }
 
 macro_rules! make_unique_seq {
     ( $($t:ty),* ) => {
-        $(impl Stream<$t> for UniqueSeqStream {
+        $(impl Stream<$t> for UniqueSeqStream<$t> {
             #[inline]
             fn increment(&self) -> $t {
-                let inc = self as *const UniqueSeqStream;
-                inc as $t | 1
+                match self.inc.get() {
+                    None => {
+                        let inc = self as *const UniqueSeqStream<$t>;
+                        let inc = inc as $t | 1;
+                        self.inc.set(Some(inc));
+                        inc
+                    },
+                    Some(inc) => inc,
+                }
+            }
+
+            fn get_stream(&self) -> $t {
+                match self.inc.get() {
+                    None => {
+                        let inc = self as *const UniqueSeqStream<$t>;
+                        let inc = inc as $t | 1;
+                        self.inc.set(Some(inc));
+                        inc
+                    },
+                    Some(inc) => inc,
+                }
             }
         })*
     }
@@ -118,19 +163,27 @@ macro_rules! make_unique_seq {
 
 
 //For use with MCG
-pub struct NoSeqStream;
+pub struct NoSeqStream<IType>{
+    phantom    : PhantomData<IType>
+}
 
-impl NoSeqStream {
-    pub fn new() -> NoSeqStream {
-        NoSeqStream
+impl<IType> NoSeqStream<IType> {
+    pub fn new() -> NoSeqStream<IType> {
+        NoSeqStream{
+            phantom : PhantomData::<IType>,
+        }
     }
 }
 
 macro_rules! make_no_seq {
     ( $($t:ty),* ) => {
-        $(impl Stream<$t> for NoSeqStream {
+        $(impl Stream<$t> for NoSeqStream<$t> {
             #[inline]
             fn increment(&self) -> $t {
+                0
+            }
+
+            fn get_stream(&self) -> $t {
                 0
             }
         })*

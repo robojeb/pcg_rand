@@ -81,7 +81,9 @@
 //! * `Rr`: Refers to a random rotation. Randomly rotates based on entropy from the state.
 //! * `Rs`: Refers to a random shift. Randomly shifts based on entropy from the state.
 //!
-
+#![feature(custom_derive, plugin)]
+#![plugin(serde_macros)]
+extern crate serde;
 
 extern crate rand;
 
@@ -103,6 +105,7 @@ use std::marker::PhantomData;
 ///
 /// This structure allows the building of many types of PCG generators by using various
 /// Mixins for both the stream, multiplier, and permutation function.
+#[derive(Serialize, Deserialize)]
 pub struct PcgEngine<Itype, Xtype,
     StreamMix : Stream<Itype>,
     MulMix : Multiplier<Itype>,

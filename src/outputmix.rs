@@ -28,6 +28,7 @@ pub trait OutputMixin<Itype, Xtype> {
     fn output(&self, state : Itype) -> Xtype;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct XshRsMixin;
 
 macro_rules! make_Xsh_Rs_mixins {
@@ -70,6 +71,7 @@ make_Xsh_Rs_mixins!(
     u64, u32, 64, 32
 );
 
+#[derive(Serialize, Deserialize)]
 pub struct XshRrMixin;
 
 macro_rules! make_Xsh_Rr_mixins {

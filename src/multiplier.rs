@@ -29,6 +29,7 @@ pub trait Multiplier<Itype> {
 }
 
 
+#[derive(Serialize, Deserialize)]
 pub struct DefaultMultiplier;
 
 macro_rules! make_default_mul {
@@ -49,6 +50,7 @@ make_default_mul!(
     u64 => 6364136223846793005u64
 );
 
+#[derive(Serialize, Deserialize)]
 pub struct McgMultiplier;
 
 macro_rules! make_mcg_mul {

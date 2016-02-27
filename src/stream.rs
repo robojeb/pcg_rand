@@ -37,6 +37,7 @@ pub trait Stream<Itype> {
 }
 
 //Definitions of the sequence types
+#[derive(Serialize, Deserialize)]
 pub struct OneSeqStream<IType>{
     phantom    : PhantomData<IType>
 }
@@ -64,6 +65,7 @@ macro_rules! make_one_seq {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct SpecificSeqStream<Itype> {
     inc : Itype
 }
@@ -118,6 +120,7 @@ macro_rules! make_specific_seq {
 
 use std::cell::Cell;
 
+#[derive(Serialize, Deserialize)]
 pub struct UniqueSeqStream<IType> {
     inc : Cell<Option<IType>>,
 }
@@ -163,6 +166,7 @@ macro_rules! make_unique_seq {
 
 
 //For use with MCG
+#[derive(Serialize, Deserialize)]
 pub struct NoSeqStream<IType>{
     phantom    : PhantomData<IType>
 }

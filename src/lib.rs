@@ -94,7 +94,7 @@ use std::num::Wrapping;
 mod stream;
 mod multiplier;
 mod outputmix;
-mod custom_serialize;
+// mod custom_serialize;
 
 use stream::{Stream, OneSeqStream, SpecificSeqStream, UniqueSeqStream, NoSeqStream};
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
@@ -106,6 +106,7 @@ use std::marker::PhantomData;
 ///
 /// This structure allows the building of many types of PCG generators by using various
 /// Mixins for both the stream, multiplier, and permutation function.
+#[derive(Serialize, Deserialize)]
 pub struct PcgEngine<Itype, Xtype,
     StreamMix : Stream<Itype>,
     MulMix : Multiplier<Itype>,

@@ -120,7 +120,6 @@ macro_rules! make_specific_seq {
 
 use std::cell::Cell;
 
-#[derive(Serialize, Deserialize)]
 pub struct UniqueSeqStream<IType> {
     inc : Cell<Option<IType>>,
 }

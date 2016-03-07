@@ -2,6 +2,7 @@ pcg_rand
 ========
 
 [![Clippy Linting Result](http://clippy.bashy.io/github/robojeb/pcg_rand/master/badge.svg)](http://clippy.bashy.io/github/robojeb/pcg_rand/master/log)
+https://img.shields.io/crates/v/pcg_rand.svg
 
 PCG stands for Permuted Congruential generators. They are a simple family of
 random number generators which use the much denounced Linear Congruential

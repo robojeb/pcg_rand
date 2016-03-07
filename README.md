@@ -14,14 +14,12 @@ information about PCG can be found [here](http://pcg-random.org).
 
 Current Status
 --------------
-Currently there is only one generator implemented. The Pcg32Basic generator is
-based off of the "C minimal" implementation from [pcg-random.org](http://pcg-random.org).
-It is not the most powerful PCG but it is very fast and simple.
+Currently 32 bit generators are provided, minus some of the non-used output mixins from the C++ library.
 
 Future Work
 -----------
 
-* Implement more generator types
+* ~~Implement more generator types~~
 * Implement seeking for the generators
 
 

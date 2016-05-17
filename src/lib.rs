@@ -385,11 +385,6 @@ impl<Xtype, MulMix, OutMix> SeedableRng<[u128;2]> for PcgEngine<u128, Xtype, Spe
     }
 }
 
-
-
-
-
-
 /*
  * The simple C minimal implementation of PCG32
  */

@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pcg_rand = "0.3.2"
+//! pcg_rand = "0.5.0"
 //! ```
 //! #Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy
@@ -84,18 +84,23 @@
 
 
 extern crate rand;
+extern crate extprim;
 
 use rand::{Rng, Rand, SeedableRng};
 
 use std::num::Wrapping;
 
+use extprim::u128::u128;
+
 mod stream;
 mod multiplier;
 mod outputmix;
+mod numops;
 
-use stream::{Stream, OneSeqStream, SpecificSeqStream, UniqueSeqStream, NoSeqStream};
+use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream};
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
+use numops::*;
 
 use std::marker::PhantomData;
 
@@ -115,211 +120,114 @@ pub struct PcgEngine<Itype, Xtype,
     phantom    : PhantomData<Xtype>
 }
 
-macro_rules! build_basic_pcg {
-    ( $($name:ident, $itype:ty, $xtype:ty, $seq:ident, $mul:ident, $out:ident);* ) => (
-        $(
-            /// A helper definition for a PcgEngine with parameters defined in the name
-            pub type $name = PcgEngine<$itype, $xtype, $seq<$itype>, $mul, $out>;
-
-            impl $name {
-                /// Creates a new unseeded PCG
-                /// This will have state 0 and a sequence based on its sequence type
-                pub fn new_unseeded() -> $name {
-                    PcgEngine{
-                        state      : 0,
-                        stream_mix : $seq::<$itype>::new(),
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-
-                /// Gets the internal state and increment of the generator.
-                /// useful for stopping and resuming the generator.
-                /// NOTE: rebuilding the generator will only work if you use the same multiplier
-                /// and output mixin when rebuilding
-                pub fn get_state(&self) -> [$itype; 2] {
-                    return [self.state, self.stream_mix.get_stream()];
-                }
-            }
-
-            impl Rng for $name {
-                #[inline]
-                fn next_u32(&mut self) -> u32 {
-                    let oldstate = Wrapping(self.state.clone());
-                    let mul = Wrapping::<$itype>(self.mul_mix.multiplier());
-                    let inc = Wrapping::<$itype>(self.stream_mix.increment());
-                    self.state = (oldstate * mul + inc).0;
-
-                    self.out_mix.output(oldstate.0)
-                }
-            }
-
-            impl Rand for $name {
-                fn rand<R: Rng>(other: &mut R) -> $name {
-                    PcgEngine{
-                        state      : other.gen(),
-                        stream_mix : $seq::new(),
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-            }
-
-            impl SeedableRng<$itype> for $name {
-                fn reseed(&mut self, seed: $itype) {
-                    self.state = seed;
-                }
-
-                fn from_seed(seed: $itype) -> $name {
-                    PcgEngine{
-                        state      : seed,
-                        stream_mix : $seq::new(),
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-            }
-        )*
-    )
+impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
+    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<Xtype> + Clone, Xtype: PcgOps + BitSize, 
+        StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, Xtype> {
+            
+    pub fn new_unseeded() -> Self {
+        PcgEngine {
+            state      : Itype::zero(),
+            stream_mix : StreamMix::build(),
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }        
 }
 
-macro_rules! build_sequence_pcg {
-    ( $($name:ident, $itype:ty, $xtype:ty, $seq:ident, $mul:ident, $out:ident);* ) => (
-        $(
-            /// A helper definition for a PcgEngine with parameters defined in the name
-            pub type $name = PcgEngine<$itype, $xtype, $seq<$itype>, $mul, $out>;
+//Provide random for 32 bit generators
+impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, MulMix, OutMix>
+    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<u32> + Clone,  
+        StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, u32> {
 
-            impl $name {
-                /// Creates a new unseeded PCG
-                /// This will have state 0 and sequence 1
-                pub fn new_unseeded() -> $name {
-                    PcgEngine{
-                        state      : 0,
-                        stream_mix : $seq::<$itype>::new(),
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-
-                pub fn set_stream(&mut self, stream : $itype) {
-                    self.stream_mix.set_stream(stream);
-                }
-
-                /// Gets the internal state and increment of the generator.
-                /// useful for stopping and resuming the generator.
-                /// NOTE: rebuilding the generator will only work if you use the same multiplier
-                /// and output mixin when rebuilding
-                pub fn get_state(&self) -> [$itype; 2] {
-                    return [self.state, self.stream_mix.get_stream()];
-                }
-
-                /// Builds a PCG from a saved state
-                pub fn new_from_state(values: [$itype; 2]) -> $name {
-                    let stream = $seq::<$itype>::new_with_value(values[1]);
-                    PcgEngine {
-                        state      : values[0],
-                        stream_mix : stream,
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-            }
-
-            impl Rng for $name {
-                #[inline]
-                fn next_u32(&mut self) -> u32 {
-                    let oldstate = Wrapping(self.state.clone());
-                    let mul = Wrapping::<$itype>(self.mul_mix.multiplier());
-                    let inc = Wrapping::<$itype>(self.stream_mix.increment());
-                    self.state = (oldstate * mul + inc).0;
-
-                    self.out_mix.output(oldstate.0)
-                }
-            }
-
-            impl Rand for $name {
-                fn rand<R: Rng>(other: &mut R) -> $name {
-                    let mut stream_mix = $seq::<$itype>::new();
-                    stream_mix.set_stream(other.gen());
-                    PcgEngine{
-                        state      : other.gen(),
-                        stream_mix : stream_mix,
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-            }
-
-            impl SeedableRng<[$itype; 2]> for $name {
-                fn reseed(&mut self, seed: [$itype; 2]) {
-                    self.state = seed[0];
-                    self.stream_mix.set_stream(seed[0]);
-                }
-
-                fn from_seed(seed: [$itype; 2]) -> $name {
-                    let mut stream_mix = $seq::<$itype>::new();
-                    stream_mix.set_stream(seed[1]);
-                    PcgEngine{
-                        state      : seed[0],
-                        stream_mix : stream_mix,
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-            }
-
-            impl SeedableRng<$itype> for $name {
-                fn reseed(&mut self, seed: $itype) {
-                    self.state = seed;
-                }
-
-                fn from_seed(seed: $itype) -> $name {
-                    PcgEngine{
-                        state      : seed,
-                        stream_mix : $seq::<$itype>::new(),
-                        mul_mix    : $mul,
-                        out_mix    : $out,
-                        phantom    : PhantomData::<$xtype>,
-                    }
-                }
-            }
-        )*
-    )
+    #[inline]
+    fn next_u32(&mut self) -> u32 {
+        let oldstate = self.state.clone();
+        self.state = self.stream_mix.increment().add(oldstate.mul(self.mul_mix.multiplier()));
+        
+        self.out_mix.output(oldstate)
+    }
 }
 
-build_basic_pcg!(
-    OneseqXshRs6432, u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin;
-    UniqueXshRs6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin;
-    OneseqXshRr6432, u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin;
-    UniqueXshRr6432, u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin;
-    McgXshRs6432,    u64, u32, NoSeqStream, McgMultiplier, XshRsMixin;
-    McgXshRr6432,    u64, u32, NoSeqStream, McgMultiplier, XshRrMixin
-);
+//Provide random for 64 bit generators
+impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, MulMix, OutMix>
+    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<u64> + Clone,  
+        StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, u64> {
 
-build_sequence_pcg!(
-    SetseqXshRs6432, u64, u32, SpecificSeqStream, DefaultMultiplier, XshRsMixin;
-    SetseqXshRr6432, u64, u32, SpecificSeqStream, DefaultMultiplier, XshRrMixin
-);
+    #[inline]
+    fn next_u32(&mut self) -> u32 {
+        let oldstate = self.state.clone();
+        self.state = self.stream_mix.increment().add(oldstate.mul(self.mul_mix.multiplier()));
+        
+        //Truncate the output
+        self.out_mix.output(oldstate) as u32
+    }
+
+    #[inline]
+    fn next_u64(&mut self) -> u64 {
+        let oldstate = self.state.clone();
+        self.state = self.stream_mix.increment().add(oldstate.mul(self.mul_mix.multiplier()));
+        
+        self.out_mix.output(oldstate)
+    }
+}
+
+impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
+    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<Xtype> + Clone + Rand, Xtype: PcgOps + BitSize, 
+        StreamMix: Stream<Itype> + Rand, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, Xtype>
+{
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        PcgEngine{
+            state: rng.gen(),
+            stream_mix : rng.gen(),
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+
+
+pub type OneseqXshRs6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
+pub type OneseqXshRr6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type SetseqXshRs6432 = PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRsMixin>;
+pub type SetseqXshRr6432 = PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin>;
+pub type McgXshRs6432    = PcgEngine<u64, u32, NoSeqStream, McgMultiplier, XshRsMixin>;
+pub type McgXshRr6432    = PcgEngine<u64, u32, NoSeqStream, McgMultiplier, XshRrMixin>;
 
 /// A helper definition for a simple 32bit PCG which can have multiple random streams
 pub type Pcg32       = SetseqXshRr6432;
 /// A helper definition for a 32bit PCG which hase a fixed good random stream
 pub type Pcg32Oneseq = OneseqXshRr6432;
 /// A helper definition for a 32bit PCG which has a unique random stream for each instance
-pub type Pcg32Unique = UniqueXshRr6432;
+//pub type Pcg32Unique = UniqueXshRr6432;
 /// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
 /// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
 /// compiler can optimize and reduce the number of operations.
 pub type Pcg32Fast = McgXshRs6432;
+
+pub type OneseqXshRs12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRsMixin>;
+pub type OneseqXshRr12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type SetseqXshRs12864 = PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
+pub type SetseqXshRr12864 = PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
+pub type McgXshRs12864    = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRsMixin>;
+pub type McgXshRr12864    = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRrMixin>;
+
+/// A helper definition for a simple 64bit PCG which can have multiple random streams
+pub type Pcg64       = SetseqXshRr12864;
+/// A helper definition for a 64bit PCG which hase a fixed good random stream
+pub type Pcg64Oneseq = OneseqXshRr12864;
+/// A helper definition for a 64bit PCG which has a unique random stream for each instance
+//pub type Pcg64Unique = UniqueXshRr12864;
+/// A helper definition for a 64bit PCG which is fast but may lack statistical quality.
+///
+/// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
+/// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
+/// compiler can optimize and reduce the number of operations.
+pub type Pcg64Fast = McgXshRs12864;
 
 /*
  * The simple C minimal implementation of PCG32

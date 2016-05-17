@@ -1,6 +1,6 @@
 [package]
 name = "pcg_rand"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 
 homepage = "https://github.com/robojeb/pcg_rand"
@@ -26,3 +26,4 @@ path = "src/main.rs"
 [dependencies]
 
 rand = "0.3.13"
+extprim = "1.0.0"

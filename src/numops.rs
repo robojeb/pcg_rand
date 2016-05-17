@@ -7,6 +7,7 @@ pub trait PcgOps {
     fn div(&self, rhs : Self) -> Self;
     
     fn xor(&self, rhs : Self) -> Self;
+    fn or(&self, rhs : Self) -> Self;
     
     fn lsh(&self, rhs : usize) -> Self;
     fn rsh(&self, rhs : usize) -> Self;
@@ -14,8 +15,11 @@ pub trait PcgOps {
     fn rrot(&self, rhs : usize) -> Self;
     fn lrot(&self, rhs : usize) -> Self;
     
+    fn from_usize(val: usize) -> Self;
+    
     fn usize(&self) -> usize;
     fn zero() -> Self;
+    fn one() -> Self;
 }
 
 pub trait BitSize {
@@ -69,6 +73,11 @@ macro_rules! basic_ops {
             }
             
             #[inline]
+            fn or(&self, rhs: $t) -> $t {
+                self | rhs
+            }
+            
+            #[inline]
             fn lsh(&self, rhs : usize) -> $t {
                 self.wrapping_shl(rhs as u32)
             }
@@ -89,6 +98,11 @@ macro_rules! basic_ops {
             }
             
             #[inline]
+            fn from_usize(val : usize) -> $t {
+                val as $t
+            }
+            
+            #[inline]
             fn usize(&self) -> usize {
                 *self as usize
             }
@@ -96,6 +110,11 @@ macro_rules! basic_ops {
             #[inline]
             fn zero() -> $t {
                 0
+            }
+            
+            #[inline]
+            fn one() -> $t {
+                1
             }
         }
             
@@ -205,6 +224,11 @@ impl PcgOps for u128 {
     }
     
     #[inline]
+    fn or(&self, rhs: u128) -> u128 {
+        *self | rhs
+    }
+    
+    #[inline]
     fn lsh(&self, rhs : usize) -> u128 {
         self.wrapping_shl(rhs as u32)
     }
@@ -225,6 +249,11 @@ impl PcgOps for u128 {
     }
     
     #[inline]
+    fn from_usize(val : usize) -> u128 {
+        u128::new(val as u64)
+    }
+    
+    #[inline]
     fn usize(&self) -> usize {
         self.low64() as usize
     }
@@ -232,5 +261,10 @@ impl PcgOps for u128 {
     #[inline]
     fn zero() -> u128 {
         u128::zero()
+    }
+    
+    #[inline]
+    fn one() -> u128 {
+        u128::one()
     }
 }

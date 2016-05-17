@@ -97,7 +97,7 @@ mod multiplier;
 mod outputmix;
 mod numops;
 
-use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream};
+use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStream};
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 use numops::*;
@@ -187,10 +187,10 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, S
     }
 }
 
-
-
 pub type OneseqXshRs6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type OneseqXshRr6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type UniqueXshRs6432 = PcgEngine<u64, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
+pub type UniqueXshRr6432 = PcgEngine<u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
 pub type SetseqXshRs6432 = PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRsMixin>;
 pub type SetseqXshRr6432 = PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin>;
 pub type McgXshRs6432    = PcgEngine<u64, u32, NoSeqStream, McgMultiplier, XshRsMixin>;
@@ -201,7 +201,7 @@ pub type Pcg32       = SetseqXshRr6432;
 /// A helper definition for a 32bit PCG which hase a fixed good random stream
 pub type Pcg32Oneseq = OneseqXshRr6432;
 /// A helper definition for a 32bit PCG which has a unique random stream for each instance
-//pub type Pcg32Unique = UniqueXshRr6432;
+pub type Pcg32Unique = UniqueXshRr6432;
 /// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
@@ -209,8 +209,36 @@ pub type Pcg32Oneseq = OneseqXshRr6432;
 /// compiler can optimize and reduce the number of operations.
 pub type Pcg32Fast = McgXshRs6432;
 
+pub type OneseqXshRs12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
+pub type OneseqXshRr12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type UniqueXshRs12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
+pub type UniqueXshRr12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type SetseqXshRs12832 = PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
+pub type SetseqXshRr12832 = PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
+pub type McgXshRs12832    = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRsMixin>;
+pub type McgXshRr12832    = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRrMixin>;
+
+/// A helper definition for a simple 32bit PCG which can have multiple random streams. This version uses 128bits of internal state
+/// This makes it potentially slower but it has a longer period.
+pub type Pcg32L       = SetseqXshRr12832;
+/// A helper definition for a 32bit PCG which hase a fixed good random streamThis version uses 128bits of internal state
+/// This makes it potentially slower but it has a longer period.
+pub type Pcg32LOneseq = OneseqXshRr12832;
+/// A helper definition for a 32bit PCG which has a unique random stream for each instanceThis version uses 128bits of internal state
+/// This makes it potentially slower but it has a longer period.
+pub type Pcg32LUnique = UniqueXshRr12832;
+/// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
+///
+/// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
+/// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
+/// compiler can optimize and reduce the number of operations.This version uses 128bits of internal state
+/// This makes it potentially slower but it has a longer period.
+pub type Pcg32LFast = McgXshRs12832;
+
 pub type OneseqXshRs12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type OneseqXshRr12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type UniqueXshRs12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
+pub type UniqueXshRr12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
 pub type SetseqXshRs12864 = PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
 pub type SetseqXshRr12864 = PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
 pub type McgXshRs12864    = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRsMixin>;
@@ -221,13 +249,40 @@ pub type Pcg64       = SetseqXshRr12864;
 /// A helper definition for a 64bit PCG which hase a fixed good random stream
 pub type Pcg64Oneseq = OneseqXshRr12864;
 /// A helper definition for a 64bit PCG which has a unique random stream for each instance
-//pub type Pcg64Unique = UniqueXshRr12864;
+pub type Pcg64Unique = UniqueXshRr12864;
 /// A helper definition for a 64bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
 /// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
 /// compiler can optimize and reduce the number of operations.
 pub type Pcg64Fast = McgXshRs12864;
+
+
+// Seeding RNGS
+
+
+impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<u64> for PcgEngine<u64, Xtype, StreamMix, MulMix, OutMix> 
+    where Xtype: PcgOps + BitSize, StreamMix: Stream<u64>, MulMix: Multiplier<u64>, OutMix: OutputMixin<u64, Xtype>
+{
+    fn reseed(&mut self, seed: u64) {
+        self.state = seed;
+    }
+    
+    fn from_seed(seed: u64) -> Self {
+        PcgEngine{
+            state: seed,
+            stream_mix : StreamMix::build(),
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+
+
+
+
 
 /*
  * The simple C minimal implementation of PCG32

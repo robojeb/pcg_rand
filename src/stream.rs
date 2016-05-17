@@ -87,7 +87,7 @@ pub struct SpecificSeqStream<Itype> {
     inc : Itype
 }
 
-impl<Itype: PcgConsts + Clone> Stream<Itype> for SpecificSeqStream<Itype> {
+impl<Itype: PcgOps + PcgConsts + Clone> Stream<Itype> for SpecificSeqStream<Itype> {
     fn build() -> Self {
         SpecificSeqStream {
             inc : Itype::stream(),
@@ -99,11 +99,11 @@ impl<Itype: PcgConsts + Clone> Stream<Itype> for SpecificSeqStream<Itype> {
     }
     
     fn increment(&self) -> Itype {
-        self.inc.clone()
+        self.inc.or(Itype::one())
     }
     
     fn get_stream(&self) -> Itype {
-        self.inc.clone()
+        self.inc.or(Itype::one())
     }
 }
 
@@ -115,135 +115,25 @@ impl<Itype: Rand> Rand for SpecificSeqStream<Itype> {
     }
 }
 
-// macro_rules! specific_new {
-//     ( $($t:ty => $e:expr);*) => {
-//         $(impl SpecificSeqStream<$t> {
-//             #[allow(dead_code)]
-//             pub fn new() -> SpecificSeqStream<$t> {
-//                 //We use a default good sequence so a default initialized
-//                 //version of SpecificSeqStream is the same as OneSeqStream
-//                 SpecificSeqStream{inc: $e}
-//             }
 
-//             #[allow(dead_code)]
-//             pub fn new_with_value(v : $t) -> SpecificSeqStream<$t> {
-//                 SpecificSeqStream{inc: v}
-//             }
-//         }
+pub struct UniqueSeqStream;
 
-//         )*
-//     }
-// }
+impl<Itype: PcgOps> Stream<Itype> for UniqueSeqStream {
+    fn build() -> Self {
+        UniqueSeqStream
+    }
+    
+    fn increment(&self) -> Itype {
+        Itype::from_usize(self as *const UniqueSeqStream as usize | 1)
+    }
+    
+    fn get_stream(&self) -> Itype {
+        Itype::from_usize(self as *const UniqueSeqStream as usize | 1)
+    }
+}
 
-// specific_new!(
-//     u8  => 77u8; //These are probably useless in rust
-//     u16 => 47989u16; // ^
-//     u32 => 2891336453u32;
-//     u64 => 1442695040888963407u64
-// );
-
-
-
-// macro_rules! make_specific_seq {
-//     ( $($t:ty),* ) => {
-//         $(impl Stream<$t> for SpecificSeqStream<$t> {
-//             fn set_stream(&mut self, stream_seq : $t) {
-//                 self.inc = (stream_seq << 1) | 1;
-//             }
-
-//             #[inline]
-//             fn increment(&self) -> $t {
-//                 self.inc
-//             }
-
-//             fn get_stream(&self) -> $t {
-//                 self.inc
-//             }
-//         })*
-//     }
-// }
-
-// use std::cell::Cell;
-
-// pub struct UniqueSeqStream<IType> {
-//     inc : Cell<Option<IType>>,
-// }
-
-// impl<IType: Copy> UniqueSeqStream<IType> {
-//     pub fn new() -> UniqueSeqStream<IType> {
-//         UniqueSeqStream {
-//             inc : Cell::new(None)
-//         }
-//     }
-// }
-
-// macro_rules! make_unique_seq {
-//     ( $($t:ty),* ) => {
-//         $(impl Stream<$t> for UniqueSeqStream<$t> {
-//             #[inline]
-//             fn increment(&self) -> $t {
-//                 match self.inc.get() {
-//                     None => {
-//                         let inc = self as *const UniqueSeqStream<$t>;
-//                         let inc = inc as $t | 1;
-//                         self.inc.set(Some(inc));
-//                         inc
-//                     },
-//                     Some(inc) => inc,
-//                 }
-//             }
-
-//             fn get_stream(&self) -> $t {
-//                 match self.inc.get() {
-//                     None => {
-//                         let inc = self as *const UniqueSeqStream<$t>;
-//                         let inc = inc as $t | 1;
-//                         self.inc.set(Some(inc));
-//                         inc
-//                     },
-//                     Some(inc) => inc,
-//                 }
-//             }
-//         })*
-//     }
-// }
-
-
-// //For use with MCG
-// pub struct NoSeqStream<IType>{
-//     phantom    : PhantomData<IType>
-// }
-
-// impl<IType> NoSeqStream<IType> {
-//     pub fn new() -> NoSeqStream<IType> {
-//         NoSeqStream{
-//             phantom : PhantomData::<IType>,
-//         }
-//     }
-// }
-
-// macro_rules! make_no_seq {
-//     ( $($t:ty),* ) => {
-//         $(impl Stream<$t> for NoSeqStream<$t> {
-//             #[inline]
-//             fn increment(&self) -> $t {
-//                 0
-//             }
-
-//             fn get_stream(&self) -> $t {
-//                 0
-//             }
-//         })*
-//     }
-// }
-
-// //Make the implementations for all the various sequence types
-// make_one_seq!(
-//     u8  => 77u8; //These are probably useless in rust
-//     u16 => 47989u16; // ^
-//     u32 => 2891336453u32;
-//     u64 => 1442695040888963407u64
-// );
-// make_specific_seq!(u8,u16,u32,u64);
-// make_unique_seq!(u8, u16, u32, u64);
-// make_no_seq!(u8, u16, u32, u64);
+impl Rand for UniqueSeqStream {
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        UniqueSeqStream
+    }
+}

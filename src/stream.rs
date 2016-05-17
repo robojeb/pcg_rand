@@ -133,7 +133,7 @@ impl<Itype: PcgOps> Stream<Itype> for UniqueSeqStream {
 }
 
 impl Rand for UniqueSeqStream {
-    fn rand<R: Rng>(rng: &mut R) -> Self {
+    fn rand<R: Rng>(_rng: &mut R) -> Self {
         UniqueSeqStream
     }
 }

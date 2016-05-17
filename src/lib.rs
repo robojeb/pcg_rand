@@ -258,11 +258,13 @@ pub type Pcg64Unique = UniqueXshRr12864;
 pub type Pcg64Fast = McgXshRs12864;
 
 
-// Seeding RNGS
-
+//
+// Seeding for all of the different RNG types
+//
 
 impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<u64> for PcgEngine<u64, Xtype, StreamMix, MulMix, OutMix> 
-    where Xtype: PcgOps + BitSize, StreamMix: Stream<u64>, MulMix: Multiplier<u64>, OutMix: OutputMixin<u64, Xtype>
+    where Xtype: PcgOps + BitSize, StreamMix: Stream<u64>, MulMix: Multiplier<u64>, OutMix: OutputMixin<u64, Xtype>,
+    PcgEngine<u64, Xtype, StreamMix, MulMix, OutMix> : Rng
 {
     fn reseed(&mut self, seed: u64) {
         self.state = seed;
@@ -272,6 +274,110 @@ impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<u64> for PcgEngine<u64, Xtype
         PcgEngine{
             state: seed,
             stream_mix : StreamMix::build(),
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> 
+    where Xtype: PcgOps + BitSize, StreamMix: Stream<u128>, MulMix: Multiplier<u128>, OutMix: OutputMixin<u128, Xtype>,
+    PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> : Rng
+{
+    fn reseed(&mut self, seed: [u64;2]) {
+        self.state = u128::from_parts(seed[0], seed[1]);
+    }
+    
+    fn from_seed(seed: [u64;2]) -> Self {
+        PcgEngine{
+            state: u128::from_parts(seed[0], seed[1]),
+            stream_mix : StreamMix::build(),
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<u128> for PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> 
+    where Xtype: PcgOps + BitSize, StreamMix: Stream<u128>, MulMix: Multiplier<u128>, OutMix: OutputMixin<u128, Xtype>,
+    PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> : Rng
+{
+    fn reseed(&mut self, seed: u128) {
+        self.state = seed;
+    }
+    
+    fn from_seed(seed: u128) -> Self {
+        PcgEngine{
+            state: seed,
+            stream_mix : StreamMix::build(),
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+impl<Xtype, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u64, Xtype, SpecificSeqStream<u64>, MulMix, OutMix> 
+    where Xtype: PcgOps + BitSize, MulMix: Multiplier<u64>, OutMix: OutputMixin<u64, Xtype>,
+    PcgEngine<u64, Xtype, SpecificSeqStream<u64>, MulMix, OutMix> : Rng
+{
+    fn reseed(&mut self, seed: [u64;2]) {
+        self.state = seed[0];
+        self.stream_mix.set_stream(seed[1]);
+    }
+    
+    fn from_seed(seed: [u64;2]) -> Self {
+        let mut stream = SpecificSeqStream::build();
+        stream.set_stream(seed[1]);
+        PcgEngine{
+            state: seed[0],
+            stream_mix : stream,
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+impl<Xtype, MulMix, OutMix> SeedableRng<[u64;4]> for PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> 
+    where Xtype: PcgOps + BitSize, MulMix: Multiplier<u128>, OutMix: OutputMixin<u128, Xtype>,
+    PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> : Rng
+{
+    fn reseed(&mut self, seed: [u64;4]) {
+        self.state = u128::from_parts(seed[0], seed[1]);
+        self.stream_mix.set_stream(u128::from_parts(seed[2], seed[3]));
+    }
+    
+    fn from_seed(seed: [u64;4]) -> Self {
+        let mut stream = SpecificSeqStream::build();
+        stream.set_stream(u128::from_parts(seed[2], seed[3]));
+        PcgEngine{
+            state: u128::from_parts(seed[0], seed[1]),
+            stream_mix : stream,
+            mul_mix    : MulMix::build(),
+            out_mix    : OutMix::build(),
+            phantom    : PhantomData::<Xtype>,
+        }
+    }
+}
+
+impl<Xtype, MulMix, OutMix> SeedableRng<[u128;2]> for PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> 
+    where Xtype: PcgOps + BitSize, MulMix: Multiplier<u128>, OutMix: OutputMixin<u128, Xtype>,
+    PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> : Rng
+{
+    fn reseed(&mut self, seed: [u128;2]) {
+        self.state = seed[0];
+        self.stream_mix.set_stream(seed[1]);
+    }
+    
+    fn from_seed(seed: [u128;2]) -> Self {
+        let mut stream = SpecificSeqStream::build();
+        stream.set_stream(seed[1]);
+        PcgEngine{
+            state: seed[0],
+            stream_mix : stream,
             mul_mix    : MulMix::build(),
             out_mix    : OutMix::build(),
             phantom    : PhantomData::<Xtype>,

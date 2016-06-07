@@ -27,8 +27,7 @@
 use ::numops::*;
 
 pub trait OutputMixin<Itype, Xtype> {
-    fn build() -> Self;
-    fn output(&self, state : Itype) -> Xtype;
+    fn output(state : Itype) -> Xtype;
 }
 
 pub struct XshRsMixin;
@@ -36,12 +35,8 @@ pub struct XshRsMixin;
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin 
     where Itype: PcgOps + AsSmaller<Xtype> + BitSize, Xtype: BitSize {
     
-    fn build() -> XshRsMixin {
-        XshRsMixin
-    }
-    
     #[inline(always)]
-    fn output(&self, state : Itype) -> Xtype {
+    fn output(state : Itype) -> Xtype {
         let mut state = state;
         let sparebits = Itype::bits() - Xtype::bits();
         
@@ -72,12 +67,8 @@ pub struct XshRrMixin;
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin 
     where Itype: PcgOps + AsSmaller<Xtype> + BitSize, Xtype: BitSize + PcgOps {
     
-    fn build() -> XshRrMixin {
-        XshRrMixin
-    }
-    
     #[inline(always)]
-    fn output(&self, state : Itype) -> Xtype {
+    fn output(state : Itype) -> Xtype {
         let mut state = state;
         
         let sparebits = Itype::bits() - Xtype::bits();

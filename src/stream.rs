@@ -45,7 +45,8 @@ impl<Itype: PcgConsts> Stream<Itype> for OneSeqStream {
     fn build() -> Self {
         OneSeqStream
     }
-    
+
+    #[inline(always)]    
     fn increment(&self) -> Itype {
         Itype::stream()
     }
@@ -68,6 +69,7 @@ impl<Itype: PcgOps> Stream<Itype> for NoSeqStream {
         NoSeqStream
     }
     
+    #[inline(always)]
     fn increment(&self) -> Itype {
         Itype::zero()
     }
@@ -93,11 +95,12 @@ impl<Itype: PcgOps + PcgConsts + Clone> Stream<Itype> for SpecificSeqStream<Ityp
             inc : Itype::stream(),
         }
     }
-    
+
     fn set_stream(&mut self, stream_seq : Itype) {
         self.inc = stream_seq;
     }
-    
+
+    #[inline(always)]    
     fn increment(&self) -> Itype {
         self.inc.or(Itype::one())
     }
@@ -123,6 +126,7 @@ impl<Itype: PcgOps> Stream<Itype> for UniqueSeqStream {
         UniqueSeqStream
     }
     
+    #[inline(always)]
     fn increment(&self) -> Itype {
         Itype::from_usize(self as *const UniqueSeqStream as usize | 1)
     }

@@ -24,10 +24,10 @@
  *     http://www.pcg-random.org
  */
 
+use extprim::u128::u128;
+
 pub trait Multiplier<Itype> {
-    fn build() -> Self;
-    
-    fn multiplier(&self) -> Itype;
+    fn multiplier() -> Itype;
 }
 
 use ::numops::PcgConsts;
@@ -35,40 +35,50 @@ use ::numops::PcgConsts;
 
 pub struct DefaultMultiplier;
 
-impl<Itype: PcgConsts> Multiplier<Itype> for DefaultMultiplier {
-    fn build() -> DefaultMultiplier {
-        DefaultMultiplier
-    }
-    
-    #[inline]
-    fn multiplier(&self) -> Itype {
-        Itype::default()
-    }
+macro_rules! make_default_mul {
+	     ( $( $t:ty => $e:expr);* ) => {
+	       $(impl Multiplier<$t> for DefaultMultiplier {
+	       	      #[inline]
+		      fn multiplier() -> $t {
+		      	 $e
+		      }
+		 })*
+	      }
 }
 
-// make_default_mul!(
-//     u8 => 141u8;
-//     u16 => 12829u16;
-//     u32 => 747796405u32;
-//     u64 => 6364136223846793005u64
-// );
+//impl<Itype: PcgConsts> Multiplier<Itype> for DefaultMultiplier {
+//    #[inline(always)]
+//    fn multiplier() -> Itype {
+//        Itype::default()
+//    }
+//}
+
+make_default_mul!(
+    u8 => 141u8;
+    u16 => 12829u16;
+    u32 => 747796405u32;
+    u64 => 6364136223846793005u64;
+    u128 => u128::from_parts(2549297995355413924, 4865540595714422341)
+);
 
 pub struct McgMultiplier;
 
-impl<Itype: PcgConsts> Multiplier<Itype> for McgMultiplier {
-    fn build() -> McgMultiplier {
-        McgMultiplier
-    }
-    
-    #[inline]
-    fn multiplier(&self) -> Itype {
-        Itype::mcg()
-    }
+macro_rules! make_mcg_mul {
+	     ( $( $t:ty => $e:expr);* ) => {
+	       $( impl Multiplier<$t> for McgMultiplier {
+	       	  #[inline]
+		  fn multiplier() -> $t {
+		     $e
+		  }
+		})*
+	}
 }
 
-// make_mcg_mul!(
-//     u8 => 217u8;
-//     u16 => 62169u16;
-//     u32 => 277803737u32;
-//     u64 => 12605985483714917081u64
-// );
+
+make_mcg_mul!(
+    u8 => 217u8;
+    u16 => 62169u16;
+    u32 => 277803737u32;
+    u64 => 12605985483714917081u64;
+    u128 => u128::from_parts(17766728186571221404,12605985483714917081)
+);

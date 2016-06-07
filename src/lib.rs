@@ -115,8 +115,8 @@ pub struct PcgEngine<Itype, Xtype,
 {
     state      : Itype,
     stream_mix : StreamMix,
-    mul_mix    : MulMix,
-    out_mix    : OutMix,
+    mul_mix    : PhantomData<MulMix>,
+    out_mix    : PhantomData<OutMix>,
     phantom    : PhantomData<Xtype>
 }
 
@@ -128,8 +128,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix,
         PcgEngine {
             state      : Itype::zero(),
             stream_mix : StreamMix::build(),
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }        
@@ -143,9 +143,9 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, 
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = self.state.clone();
-        self.state = self.stream_mix.increment().add(oldstate.mul(self.mul_mix.multiplier()));
+        self.state = self.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
         
-        self.out_mix.output(oldstate)
+        OutMix::output(oldstate)
     }
 }
 
@@ -157,18 +157,18 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, 
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = self.state.clone();
-        self.state = self.stream_mix.increment().add(oldstate.mul(self.mul_mix.multiplier()));
+        self.state = self.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
         
         //Truncate the output
-        self.out_mix.output(oldstate) as u32
+        OutMix::output(oldstate) as u32
     }
 
     #[inline]
     fn next_u64(&mut self) -> u64 {
         let oldstate = self.state.clone();
-        self.state = self.stream_mix.increment().add(oldstate.mul(self.mul_mix.multiplier()));
+        self.state = self.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
         
-        self.out_mix.output(oldstate)
+        OutMix::output(oldstate)
     }
 }
 
@@ -180,8 +180,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, S
         PcgEngine{
             state: rng.gen(),
             stream_mix : rng.gen(),
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
@@ -274,8 +274,8 @@ impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<u64> for PcgEngine<u64, Xtype
         PcgEngine{
             state: seed,
             stream_mix : StreamMix::build(),
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
@@ -293,8 +293,8 @@ impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u128, 
         PcgEngine{
             state: u128::from_parts(seed[0], seed[1]),
             stream_mix : StreamMix::build(),
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
@@ -312,8 +312,8 @@ impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<u128> for PcgEngine<u128, Xty
         PcgEngine{
             state: seed,
             stream_mix : StreamMix::build(),
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
@@ -334,8 +334,8 @@ impl<Xtype, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u64, Xtype, Speci
         PcgEngine{
             state: seed[0],
             stream_mix : stream,
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
@@ -356,8 +356,8 @@ impl<Xtype, MulMix, OutMix> SeedableRng<[u64;4]> for PcgEngine<u128, Xtype, Spec
         PcgEngine{
             state: u128::from_parts(seed[0], seed[1]),
             stream_mix : stream,
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
@@ -378,8 +378,8 @@ impl<Xtype, MulMix, OutMix> SeedableRng<[u128;2]> for PcgEngine<u128, Xtype, Spe
         PcgEngine{
             state: seed[0],
             stream_mix : stream,
-            mul_mix    : MulMix::build(),
-            out_mix    : OutMix::build(),
+            mul_mix    : PhantomData::<MulMix>,
+            out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }

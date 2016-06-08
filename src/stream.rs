@@ -24,8 +24,9 @@
  *     http://www.pcg-random.org
  */
 
-use ::numops::{PcgConsts, PcgOps};
+use ::numops::PcgOps;
 use rand::{Rng, Rand};
+use extprim::u128::u128;
 
 pub trait Stream<Itype> {
     fn build() -> Self;
@@ -41,19 +42,29 @@ pub trait Stream<Itype> {
 
 pub struct OneSeqStream;
 
-impl<Itype: PcgConsts> Stream<Itype> for OneSeqStream {
-    fn build() -> Self {
-        OneSeqStream
-    }
+macro_rules! make_one_seq {
+    ( $( $t:ty => $e:expr);* ) => {
+		$(impl Stream<$t> for OneSeqStream {
+            fn build() -> Self {
+                OneSeqStream
+            }
 
-    #[inline(always)]    
-    fn increment(&self) -> Itype {
-        Itype::stream()
-    }
-    
-    fn get_stream(&self) -> Itype {
-        Itype::stream()
-    }
+            #[inline(always)]    
+            fn increment(&self) -> $t {
+                $e
+            }
+            
+            fn get_stream(&self) -> $t {
+                $e
+            }
+        })*
+	}
+}
+
+make_one_seq!{
+    u32  => 2891336453u32;
+    u64  => 1442695040888963407u64;
+    u128 => u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
 impl Rand for OneSeqStream {
@@ -64,19 +75,29 @@ impl Rand for OneSeqStream {
 
 pub struct NoSeqStream;
 
-impl<Itype: PcgOps> Stream<Itype> for NoSeqStream {
-    fn build() -> Self {
-        NoSeqStream
-    }
-    
-    #[inline(always)]
-    fn increment(&self) -> Itype {
-        Itype::zero()
-    }
-    
-    fn get_stream(&self) -> Itype {
-        Itype::zero()
-    }
+macro_rules! make_no_seq {
+    ( $( $t:ty => $e:expr);* ) => {
+		$(impl Stream<$t> for NoSeqStream {
+            fn build() -> Self {
+                NoSeqStream
+            }
+
+            #[inline(always)]    
+            fn increment(&self) -> $t {
+                $e
+            }
+            
+            fn get_stream(&self) -> $t {
+                $e
+            }
+        })*
+	}
+}
+
+make_no_seq!{
+    u32  => 0;
+    u64  => 0;
+    u128 => u128::zero()
 }
 
 impl Rand for NoSeqStream {
@@ -89,31 +110,41 @@ pub struct SpecificSeqStream<Itype> {
     inc : Itype
 }
 
-impl<Itype: PcgOps + PcgConsts + Clone> Stream<Itype> for SpecificSeqStream<Itype> {
-    fn build() -> Self {
-        SpecificSeqStream {
-            inc : Itype::stream(),
-        }
-    }
+macro_rules! make_set_seq {
+    ( $( $t:ident => $e:expr);* ) => {
+        $(impl Stream<$t> for SpecificSeqStream<$t> {
+            fn build() -> Self {
+                SpecificSeqStream {
+                    inc : $e,
+                }
+            }
 
-    fn set_stream(&mut self, stream_seq : Itype) {
-        self.inc = stream_seq;
-    }
+            fn set_stream(&mut self, stream_seq : $t) {
+                self.inc = stream_seq.or( $t::one() );
+            }
 
-    #[inline(always)]    
-    fn increment(&self) -> Itype {
-        self.inc.or(Itype::one())
-    }
-    
-    fn get_stream(&self) -> Itype {
-        self.inc.or(Itype::one())
+            #[inline(always)]    
+            fn increment(&self) -> $t {
+                self.inc
+            }
+            
+            fn get_stream(&self) -> $t {
+                self.inc
+            }
+        })*
     }
 }
 
-impl<Itype: Rand> Rand for SpecificSeqStream<Itype> {
+make_set_seq!{
+    u32 => 2891336453u32;
+    u64 => 1442695040888963407u64;
+    u128 => u128::from_parts(6364136223846793005,1442695040888963407)
+}
+
+impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> {
     fn rand<R: Rng>(rng: &mut R) -> Self {
         SpecificSeqStream {
-            inc : rng.gen(),
+            inc : rng.gen::<Itype>().or(Itype::one()),
         }
     }
 }

@@ -121,7 +121,7 @@ pub struct PcgEngine<Itype, Xtype,
 }
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
-    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<Xtype> + Clone, Xtype: PcgOps + BitSize, 
+    where Itype: PcgOps + BitSize + AsSmaller<Xtype> + Clone, Xtype: PcgOps + BitSize, 
         StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, Xtype> {
             
     pub fn new_unseeded() -> Self {
@@ -137,7 +137,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix,
 
 //Provide random for 32 bit generators
 impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, MulMix, OutMix>
-    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<u32> + Clone,  
+    where Itype: PcgOps + BitSize + AsSmaller<u32> + Clone,  
         StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, u32> {
 
     #[inline]
@@ -151,7 +151,7 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, 
 
 //Provide random for 64 bit generators
 impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, MulMix, OutMix>
-    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<u64> + Clone,  
+    where Itype: PcgOps + BitSize + AsSmaller<u64> + Clone,  
         StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, u64> {
 
     #[inline]
@@ -173,7 +173,7 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, 
 }
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
-    where Itype: PcgConsts + PcgOps + BitSize + AsSmaller<Xtype> + Clone + Rand, Xtype: PcgOps + BitSize, 
+    where Itype: PcgOps + BitSize + AsSmaller<Xtype> + Clone + Rand, Xtype: PcgOps + BitSize, 
         StreamMix: Stream<Itype> + Rand, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, Xtype>
 {
     fn rand<R: Rng>(rng: &mut R) -> Self {

@@ -30,28 +30,18 @@ pub trait Multiplier<Itype> {
     fn multiplier() -> Itype;
 }
 
-use ::numops::PcgConsts;
-
-
 pub struct DefaultMultiplier;
 
 macro_rules! make_default_mul {
-	     ( $( $t:ty => $e:expr);* ) => {
-	       $(impl Multiplier<$t> for DefaultMultiplier {
-	       	      #[inline]
-		      fn multiplier() -> $t {
-		      	 $e
-		      }
-		 })*
-	      }
+	( $( $t:ty => $e:expr);* ) => {
+		$(impl Multiplier<$t> for DefaultMultiplier {
+			#[inline]
+			fn multiplier() -> $t {
+				$e
+			}
+		})*
+	}
 }
-
-//impl<Itype: PcgConsts> Multiplier<Itype> for DefaultMultiplier {
-//    #[inline(always)]
-//    fn multiplier() -> Itype {
-//        Itype::default()
-//    }
-//}
 
 make_default_mul!(
     u8 => 141u8;
@@ -73,7 +63,6 @@ macro_rules! make_mcg_mul {
 		})*
 	}
 }
-
 
 make_mcg_mul!(
     u8 => 217u8;

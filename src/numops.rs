@@ -30,12 +30,6 @@ pub trait AsSmaller<T> {
     fn shrink(self) -> T;
 }
 
-pub trait PcgConsts {
-    fn default() -> Self;
-    fn mcg() -> Self;
-    fn stream() -> Self;
-}
-
 //Implementations of the traits for basic types
 macro_rules! basic_ops {
     ( $( $t:ty, $bits:expr);*) => {
@@ -148,33 +142,6 @@ smaller!(
     u32, u16;
     u32, u8;
     u16, u8
-);
-
-
-macro_rules! consts {
-    ( $( $t:ty, $def:expr, $mcg:expr, $stream:expr);*) => {
-        $(
-            impl PcgConsts for $t {
-                fn default() -> $t {
-                    $def
-                }
-                
-                fn mcg() -> $t {
-                    $mcg
-                }
-                
-                fn stream() -> $t {
-                    $stream
-                }
-            }
-        )*
-    }
-}
-
-consts!(
-  u32, 747796405u32, 277803737u32, 2891336453u32;
-  u64, 6364136223846793005u64, 12605985483714917081u64, 1442695040888963407u64;
-  u128, u128::from_parts(2549297995355413924, 4865540595714422341), u128::from_parts(17766728186571221404,12605985483714917081), u128::from_parts(6364136223846793005,1442695040888963407)
 );
 
 impl AsSmaller<u64> for u128 {

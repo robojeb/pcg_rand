@@ -1,7 +1,6 @@
 pcg_rand
 ========
 
-[![Clippy Linting Result](http://clippy.bashy.io/github/robojeb/pcg_rand/master/badge.svg)](http://clippy.bashy.io/github/robojeb/pcg_rand/master/log)
 [![Crates.io Version](https://img.shields.io/crates/v/pcg_rand.svg)](https://crates.io/crates/pcg_rand)
 ![License](https://img.shields.io/crates/l/rustc-serialize.svg)
 
@@ -24,3 +23,13 @@ Future Work
 * ~~Implement more generator types~~
 * Implement seeking for the generators
 * Implement Extended generators (If I can figure out that code)
+
+Changes
+-------
+
+ * (6/7/2016): Added back some of the macros which got removed in 0.5.0
+ This is in an effort to improve some performance. Hopefully associated constants
+ can help us remove these again, but for now removing the PcgConsts trait gives
+ some extra performance and reduces indirection. It also means that it is now
+ easier to implement new streams and multipliers because you aren't bound
+ to using the three things in PcgConsts.

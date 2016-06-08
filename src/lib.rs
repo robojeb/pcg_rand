@@ -96,7 +96,8 @@ mod stream;
 mod multiplier;
 mod outputmix;
 mod numops;
-
+mod extension;
+    
 use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStream};
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};

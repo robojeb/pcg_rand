@@ -6,6 +6,8 @@ extern crate extprim;
 extern crate test;
 
 use pcg_rand::{Pcg32, Pcg32Fast, Pcg32Basic, Pcg32L};
+use pcg_rand::extension::Pcg32Ext;
+use pcg_rand::extension::extsizes::*;
 use test::Bencher;
 use rand::{Rng, XorShiftRng, SeedableRng};
 use extprim::u128::u128;
@@ -135,6 +137,18 @@ fn xorshift_next_u32(b: &mut Bencher) {
 fn xorshift_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1024;
     let mut rng = XorShiftRng::new_unseeded();
+
+    let mut x = vec![0; b.bytes as usize];
+
+    b.iter(|| {
+        rng.fill_bytes(x.as_mut_slice())
+    })
+}
+
+#[bench]
+fn pcg32ext32_fill_bytes(b: &mut Bencher) {
+    b.bytes = 1024*1025;
+    let mut rng = Pcg32Ext<Ext32>::new_unseeded();
 
     let mut x = vec![0; b.bytes as usize];
 

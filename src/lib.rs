@@ -92,11 +92,11 @@ use std::num::Wrapping;
 
 use extprim::u128::u128;
 
-mod stream;
-mod multiplier;
-mod outputmix;
-mod numops;
-mod extension;
+pub mod stream;
+pub mod multiplier;
+pub mod outputmix;
+pub mod numops;
+pub mod extension;
     
 use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStream};
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
@@ -157,11 +157,7 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, 
 
     #[inline]
     fn next_u32(&mut self) -> u32 {
-        let oldstate = self.state.clone();
-        self.state = self.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
-        
-        //Truncate the output
-        OutMix::output(oldstate) as u32
+        self.next_u64() as u32
     }
 
     #[inline]

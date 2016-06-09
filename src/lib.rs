@@ -81,6 +81,28 @@
 //! * `Rr`: Refers to a random rotation. Randomly rotates based on entropy from the state.
 //! * `Rs`: Refers to a random shift. Randomly shifts based on entropy from the state.
 //!
+//! #How to Use
+//! The simple generators work like the other Rng's from the `rand` crate.
+//! You can create a PCG as follows
+//! ```
+//! use pcg_rand::Pcg32;
+//! 
+//! let mut pcg = Pcg32::new_unseeded();
+//! 
+//! let x : u32 = pcg.gen();
+//! ```
+//! 
+//! The extended generators can be built in two ways, either by creating one 
+//! directly, or by building them from a generator at its current state.
+//! ```
+//! use pcg_rand::extension::{Pcg32Ext, ExtPcg, Ext256};
+//! use pcg_rand::Pcg32Unique;
+//! //Create an extended generator explicitly
+//! let ext1 = Pcg32Ext::<Ext256>::new_unseeded();
+//! 
+//! //Create from another PCG
+//! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::new_unseeded());
+//! ```
 
 
 extern crate rand;

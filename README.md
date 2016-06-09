@@ -4,12 +4,11 @@ pcg_rand
 [![Crates.io Version](https://img.shields.io/crates/v/pcg_rand.svg)](https://crates.io/crates/pcg_rand)
 ![License](https://img.shields.io/crates/l/rustc-serialize.svg)
 
-To use this library add
+To use this library add the following to your `Cargo.toml`
 
 ```
 pcg_rand = "0.7.0"
 ```
-
 
 PCG stands for Permuted Congruential generators. They are a simple family of
 random number generators which use the much denounced Linear Congruential

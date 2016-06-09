@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pcg_rand = "0.5.0"
+//! pcg_rand = "0.7.0"
 //! ```
 //! #Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy

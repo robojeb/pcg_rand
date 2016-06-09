@@ -23,6 +23,9 @@
 /// equidistribution. This means that the generator will produce every possible
 /// K-tuple uniformly. 
 /// 
+/// These generators require `K*sizeof(Isize)` extra bytes to provide their 
+/// equidistribution. 
+/// 
 /// These extended generators are currently in a beta state. They are 
 /// implemented according to my understanding of the generator extension 
 /// technique presented in the PCG paper. 

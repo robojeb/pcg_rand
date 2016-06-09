@@ -107,10 +107,8 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
 
     #[inline]
     fn next_u32(&mut self) -> u32 {
-        use std::mem::size_of;
         let oldstate = self.pcg.state.clone();
         self.pcg.state = self.pcg.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
-        let shift = size_of::<usize>() - Size::ext_bits();
 
         let mask = 2usize.pow(Size::ext_bits() as u32)-1;
         let pick = self.pcg.state.usize() & mask;
@@ -136,7 +134,6 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
 
     #[inline]
     fn next_u64(&mut self) -> u64 {
-        use std::mem::size_of;
         let oldstate = self.pcg.state.clone();
         self.pcg.state = self.pcg.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
         

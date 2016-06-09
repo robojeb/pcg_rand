@@ -238,7 +238,9 @@ pub type McgXshRs12832    = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, Xsh
 pub type McgXshRr12832    = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRrMixin>;
 
 /// A helper definition for a simple 32bit PCG which can have multiple random streams. This version uses 128bits of internal state
-/// This makes it potentially slower but it has a longer period.
+/// This makes it potentially slower but it has a longer period. (In testing
+/// it appears to be better to use an extended generator Pcg32Ext to get a long
+/// period rather than the Pcg32L)
 pub type Pcg32L       = SetseqXshRr12832;
 /// A helper definition for a 32bit PCG which hase a fixed good random streamThis version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.

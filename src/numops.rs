@@ -1,5 +1,9 @@
 use extprim::u128::u128;
 
+/// The types of numaric options that PCG needs to operate. 
+/// Some day this will be replaced with Num-traits when they support
+/// wrapping opts for everything, and when extprim supports those traits as
+/// well.
 pub trait PcgOps {
     fn mul(&self, rhs : Self) -> Self;
     fn add(&self, rhs : Self) -> Self;
@@ -22,10 +26,12 @@ pub trait PcgOps {
     fn one() -> Self;
 }
 
+/// A trait that determines how many bits are in a type. 
 pub trait BitSize {
     fn bits() -> usize;
 }
 
+/// Allows a type to become a type of a smaller value.
 pub trait AsSmaller<T> {
     fn shrink(self) -> T;
 }

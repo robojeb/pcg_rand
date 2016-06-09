@@ -28,6 +28,9 @@ use ::numops::PcgOps;
 use rand::{Rng, Rand};
 use extprim::u128::u128;
 
+/// A stream provides the increment to the LCG. This increment should be
+/// an odd number or the period of the generator will not be the full size
+/// of the state.
 pub trait Stream<Itype> {
     fn build() -> Self;
     
@@ -40,6 +43,9 @@ pub trait Stream<Itype> {
     fn get_stream(&self) -> Itype;
 }
 
+/// This sequence stream defines constants as provided by the PCG paper.
+/// This struct is implemented with a macro to provide values for each
+/// Stream<Itype>.
 pub struct OneSeqStream;
 
 macro_rules! make_one_seq {
@@ -73,6 +79,9 @@ impl Rand for OneSeqStream {
     }
 }
 
+/// This stream provides an increment of 0 to the LCG. This turns the
+/// LCG into a MCG, which while being less statistically sound than an LCG,
+/// it is faster.
 pub struct NoSeqStream;
 
 macro_rules! make_no_seq {
@@ -106,6 +115,9 @@ impl Rand for NoSeqStream {
     }
 }
 
+/// By default this stream provides the same stream as OneSeqStream. The
+/// advantage to this stream is it can be changed at runtime. This incurs an
+/// extra Itype of storage overhead. 
 pub struct SpecificSeqStream<Itype> {
     inc : Itype
 }
@@ -149,7 +161,10 @@ impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> {
     }
 }
 
-
+/// This stream provides a stream based on the current location of the 
+/// generator in memory. This means that two PCG with the same seed 
+/// can produce different sequences of numbers. Though if the generator is
+/// moved it will change the stream.
 pub struct UniqueSeqStream;
 
 impl<Itype: PcgOps> Stream<Itype> for UniqueSeqStream {

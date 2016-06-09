@@ -26,10 +26,14 @@
 
 use ::numops::*;
 
+/// The output mixin trait provides the permutation function for the output
+/// of the PCG. After the LCG state is advanced the state is run through
+/// the `output(...)` function to produce the output. 
 pub trait OutputMixin<Itype, Xtype> {
     fn output(state : Itype) -> Xtype;
 }
 
+/// This output uses an Xor-shift followed by a right shift
 pub struct XshRsMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin 
@@ -62,6 +66,7 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
     }        
 }
 
+/// This output uses an xor-shift followed by a random rotation.
 pub struct XshRrMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin 

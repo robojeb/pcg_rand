@@ -1,6 +1,6 @@
 [package]
 name = "pcg_rand"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 
 homepage = "https://github.com/robojeb/pcg_rand"

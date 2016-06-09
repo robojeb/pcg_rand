@@ -26,10 +26,15 @@
 
 use extprim::u128::u128;
 
+/// This trait provides the multiplier for the internal LCG of the PCG generator
+/// Implementing this trait for a struct will allow providing your own
+/// multiplier for the PCG.
 pub trait Multiplier<Itype> {
     fn multiplier() -> Itype;
 }
 
+/// Provides a default "good" multiplier based on the multiplier provided
+/// in the C++ implementation of PCG
 pub struct DefaultMultiplier;
 
 macro_rules! make_default_mul {
@@ -51,6 +56,8 @@ make_default_mul!(
     u128 => u128::from_parts(2549297995355413924, 4865540595714422341)
 );
 
+/// Provides a default "good" multiplier based on the multiplier provided
+/// in the C++ implementation of PCG for the MCG variant of the PCG generator.
 pub struct McgMultiplier;
 
 macro_rules! make_mcg_mul {

@@ -21,13 +21,14 @@
 extern crate pcg_rand;
 extern crate rand;
 
-use rand::{Rng, OsRng};
+use rand::{Rng, OsRng, SeedableRng};
 use pcg_rand::{Pcg32Basic, Pcg32, Pcg64, Pcg32Unique, Pcg32L};
+use pcg_rand::extension::Pcg32Ext;
+use pcg_rand::extension::extsizes::Ext1024;
 
 
 #[cfg(not(test))]
 fn main() {
-    
     let mut rng = Pcg32Basic::new_unseeded();
 
     // print a bunch of random numbers

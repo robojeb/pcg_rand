@@ -107,6 +107,7 @@
 
 extern crate rand;
 extern crate extprim;
+extern crate num_traits;
 
 use rand::{Rng, Rand, SeedableRng};
 
@@ -144,8 +145,11 @@ pub struct PcgEngine<Itype, Xtype,
 }
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
-    where Itype: PcgOps + BitSize + AsSmaller<Xtype> + Clone, Xtype: PcgOps + BitSize, 
-        StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, Xtype> {
+    where 
+    Itype: PcgOps,  
+    StreamMix: Stream<Itype>, 
+    MulMix: Multiplier<Itype>, 
+    OutMix: OutputMixin<Itype, Xtype> {
             
     pub fn new_unseeded() -> Self {
         PcgEngine {
@@ -160,8 +164,11 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix,
 
 //Provide random for 32 bit generators
 impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, MulMix, OutMix>
-    where Itype: PcgOps + BitSize + AsSmaller<u32> + Clone,  
-        StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, u32> {
+    where 
+    Itype: PcgOps + Clone,  
+    StreamMix: Stream<Itype>, 
+    MulMix: Multiplier<Itype>, 
+    OutMix: OutputMixin<Itype, u32> {
 
     #[inline]
     fn next_u32(&mut self) -> u32 {
@@ -174,8 +181,11 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, 
 
 //Provide random for 64 bit generators
 impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, MulMix, OutMix>
-    where Itype: PcgOps + BitSize + AsSmaller<u64> + Clone,  
-        StreamMix: Stream<Itype>, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, u64> {
+    where 
+    Itype: PcgOps + Clone,
+    StreamMix: Stream<Itype>, 
+    MulMix: Multiplier<Itype>, 
+    OutMix: OutputMixin<Itype, u64> {
 
     #[inline]
     fn next_u32(&mut self) -> u32 {
@@ -192,8 +202,11 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, 
 }
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
-    where Itype: PcgOps + BitSize + AsSmaller<Xtype> + Clone + Rand, Xtype: PcgOps + BitSize, 
-        StreamMix: Stream<Itype> + Rand, MulMix: Multiplier<Itype>, OutMix: OutputMixin<Itype, Xtype>
+    where 
+    Itype: Rand, 
+    StreamMix: Stream<Itype> + Rand, 
+    MulMix: Multiplier<Itype>, 
+    OutMix: OutputMixin<Itype, Xtype>
 {
     fn rand<R: Rng>(rng: &mut R) -> Self {
         PcgEngine{
@@ -285,8 +298,6 @@ pub type Pcg64Fast = McgXshRs12864;
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng<Itype> for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
     where 
-    Itype: PcgOps + BitSize,
-    Xtype: PcgOps + BitSize, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>,
@@ -308,8 +319,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng<Itype> for PcgEngine<I
 }
 
 impl<Itype, Xtype, MulMix, OutMix> SeedableRng<[Itype;2]> for PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> 
-    where Itype: PcgOps + BitSize + Clone,
-    Xtype: PcgOps + BitSize,
+    where 
+    Itype: Clone,
     MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, Xtype>,
     SpecificSeqStream<Itype>: Stream<Itype>,
@@ -334,7 +345,10 @@ impl<Itype, Xtype, MulMix, OutMix> SeedableRng<[Itype;2]> for PcgEngine<Itype, X
 }
 
 impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> 
-    where Xtype: PcgOps + BitSize, StreamMix: Stream<u128>, MulMix: Multiplier<u128>, OutMix: OutputMixin<u128, Xtype>,
+    where 
+    StreamMix: Stream<u128>, 
+    MulMix: Multiplier<u128>, 
+    OutMix: OutputMixin<u128, Xtype>,
     PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> : Rng
 {
     fn reseed(&mut self, seed: [u64;2]) {
@@ -353,7 +367,9 @@ impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u128, 
 }
 
 impl<Xtype, MulMix, OutMix> SeedableRng<[u64;4]> for PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> 
-    where Xtype: PcgOps + BitSize, MulMix: Multiplier<u128>, OutMix: OutputMixin<u128, Xtype>,
+    where 
+    MulMix: Multiplier<u128>, 
+    OutMix: OutputMixin<u128, Xtype>,
     PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> : Rng
 {
     fn reseed(&mut self, seed: [u64;4]) {

@@ -24,7 +24,9 @@
  *     http://www.pcg-random.org
  */
 
+use num_traits::{PrimInt, ToPrimitive};
 use ::numops::*;
+use std::ops::{Shr, BitXor};
 
 /// The output mixin trait provides the permutation function for the output
 /// of the PCG. After the LCG state is advanced the state is run through
@@ -37,7 +39,9 @@ pub trait OutputMixin<Itype, Xtype> {
 pub struct XshRsMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin 
-    where Itype: PcgOps + AsSmaller<Xtype> + BitSize, Xtype: BitSize {
+    where 
+    Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + AsSmaller<Xtype> + BitSize + ToPrimitive + Copy, 
+    Xtype: BitSize {
     
     #[inline(always)]
     fn output(state : Itype) -> Xtype {
@@ -56,13 +60,13 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
         let xshift = topspare + (Xtype::bits()+maxrandshift)/2;
         
         let rshift = if opbits != 0 {
-            (state.rsh(Itype::bits() - opbits)).usize() & mask
+            (state >> (Itype::bits() - opbits)).to_usize().unwrap() & mask
         } else {
             0
         };
         
-        state = state.xor(state.rsh(xshift));
-        (state.rsh(bottomspare - maxrandshift + rshift)).shrink()
+        state = state ^ (state >> xshift);
+        (state >> (bottomspare - maxrandshift + rshift)).shrink()
     }        
 }
 
@@ -70,7 +74,8 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
 pub struct XshRrMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin 
-    where Itype: PcgOps + AsSmaller<Xtype> + BitSize, Xtype: BitSize + PcgOps {
+    where Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + ToPrimitive + AsSmaller<Xtype> + BitSize + Copy, 
+    Xtype: BitSize + PrimInt {
     
     #[inline(always)]
     fn output(state : Itype) -> Xtype {
@@ -96,11 +101,13 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin
         let xshift = (topspare + xtypebits)/2;
         
         let rot = if opbits != 0 {
-            (state.rsh(Itype::bits() - opbits)).usize() & mask
+            (state >> (Itype::bits() - opbits)).to_usize().unwrap() & mask
         } else { 0 };
+
         let amprot = (rot << amplifier) & mask;
-        state = state.xor(state.rsh(xshift));
-        let result : Xtype = state.rsh(bottomspare).shrink();
-        result.rrot(amprot)
+        state = state ^ (state >> xshift);
+
+        let result : Xtype = (state >> bottomspare).shrink();
+        result.rotate_right(amprot as u32)
     }        
 }

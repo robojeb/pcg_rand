@@ -45,6 +45,11 @@ pub trait PcgOps {
     fn one() -> Self;
 }
 
+/// Convert a value to a usize don't care about overflow etc
+pub trait AsUsize {
+    fn as_usize(&self) -> usize;
+}
+
 /// A trait that determines how many bits are in a type. 
 pub trait BitSize {
     fn bits() -> usize;

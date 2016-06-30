@@ -27,3 +27,4 @@ path = "src/main.rs"
 
 rand = "0.3.13"
 extprim = "1.0.0"
+num-traits = "0.1.32"

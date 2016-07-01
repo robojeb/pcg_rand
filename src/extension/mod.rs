@@ -44,6 +44,7 @@ use super::numops::*;
 use super::stream::*;
 use super::outputmix::*;
 use super::multiplier::*;
+use num_traits::Zero;
 
 /// An extended PCG generator. These generators provide K-dimensional 
 /// equidistribution. Where K is specified by the value of the Size parameter
@@ -61,18 +62,20 @@ pub struct ExtPcg<Itype, Xtype,
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
     ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where Itype: PcgOps + BitSize + AsSmaller<Xtype> + Clone, 
+    where
+    Itype: Zero,
     Xtype: PcgOps + BitSize + Rand, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>,
-    Size: ExtSize {
+    Size: ExtSize,
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng
+{
 
     /// Create a new ExtPcg from an existing PCG. This will consume
     /// Size random values to initialize the extension array.
     pub fn from_pcg(pcg: PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>) ->
-        ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-        where PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng {
+        ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> {
             let mut pcg = pcg;
 
             //Create the starting extension array
@@ -90,7 +93,6 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
 
     /// Create a new unseeded ExtPcg. 
     pub fn new_unseeded() -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng
     {
         let pcg = PcgEngine::<Itype, Xtype, StreamMix, MulMix, OutMix>::new_unseeded();
         Self::from_pcg(pcg)
@@ -99,7 +101,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
 
 impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
     ExtPcg<Itype, u32, StreamMix, MulMix, OutMix, Size>
-    where Itype: PcgOps + BitSize + AsSmaller<u32> + Clone, 
+    where Itype: PcgOps + AsUsize + BitSize + AsSmaller<u32> + Clone, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, u32>,
@@ -108,10 +110,10 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = self.pcg.state.clone();
-        self.pcg.state = self.pcg.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
+        self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
 
         let mask = 2usize.pow(Size::ext_bits() as u32)-1;
-        let pick = self.pcg.state.usize() & mask;
+        let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
         self.ext[pick] = self.ext[pick] + 1;
@@ -121,7 +123,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
 
 impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
     ExtPcg<Itype, u64, StreamMix, MulMix, OutMix, Size>
-    where Itype: PcgOps + BitSize + AsSmaller<u64> + Clone, 
+    where Itype: PcgOps + AsUsize + BitSize + AsSmaller<u64> + Clone, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, u64>,
@@ -135,10 +137,10 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
     #[inline]
     fn next_u64(&mut self) -> u64 {
         let oldstate = self.pcg.state.clone();
-        self.pcg.state = self.pcg.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
+        self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
         
         let mask = 2usize.pow(Size::ext_bits() as u32)-1;
-        let pick = self.pcg.state.usize() & mask;
+        let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
         self.ext[pick] = self.ext[pick] + 1;
@@ -164,7 +166,7 @@ pub type Pcg64Ext<Size> = SetseqXshRr12864ext<Size>;
 //These generics get pretty insane
 impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<Itype> for ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
     where 
-    Itype: PcgOps + BitSize + Clone + AsSmaller<Xtype>,
+    Itype: Zero,
     Xtype: PcgOps + BitSize + Rand, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
@@ -191,7 +193,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<Itype> for ExtPc
 
 impl<Itype, Xtype,MulMix, OutMix, Size> SeedableRng<[Itype; 2]> for ExtPcg<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix, Size> 
     where 
-    Itype: PcgOps + BitSize + Clone + AsSmaller<Xtype>,
+    Itype: Zero,
     Xtype: PcgOps + BitSize + Rand, 
     SpecificSeqStream<Itype>: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 

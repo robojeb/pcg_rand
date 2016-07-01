@@ -125,6 +125,7 @@ use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStre
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 use numops::*;
+use num_traits::Zero;
 
 use std::marker::PhantomData;
 
@@ -146,7 +147,7 @@ pub struct PcgEngine<Itype, Xtype,
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
     where 
-    Itype: PcgOps,  
+    Itype: Zero,  
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype> {
@@ -173,7 +174,7 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, 
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = self.state.clone();
-        self.state = self.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
+        self.state = self.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
         
         OutMix::output(oldstate)
     }
@@ -195,7 +196,7 @@ impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, 
     #[inline]
     fn next_u64(&mut self) -> u64 {
         let oldstate = self.state.clone();
-        self.state = self.stream_mix.increment().add(oldstate.mul(MulMix::multiplier()));
+        self.state = self.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
         
         OutMix::output(oldstate)
     }

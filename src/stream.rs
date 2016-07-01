@@ -27,6 +27,8 @@
 use ::numops::PcgOps;
 use rand::{Rng, Rand};
 use extprim::u128::u128;
+use num_traits::{One, FromPrimitive};
+use std::ops::BitOr;
 
 /// A stream provides the increment to the LCG. This increment should be
 /// an odd number or the period of the generator will not be the full size
@@ -132,7 +134,7 @@ macro_rules! make_set_seq {
             }
 
             fn set_stream(&mut self, stream_seq : $t) {
-                self.inc = stream_seq.or( $t::one() );
+                self.inc = stream_seq | $t::one();
             }
 
             #[inline(always)]    
@@ -153,10 +155,13 @@ make_set_seq!{
     u128 => u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
-impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> {
+impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> 
+    where 
+    Itype: Rand + BitOr<Itype, Output=Itype> + One
+{
     fn rand<R: Rng>(rng: &mut R) -> Self {
         SpecificSeqStream {
-            inc : rng.gen::<Itype>().or(Itype::one()),
+            inc : rng.gen::<Itype>() | Itype::one(),
         }
     }
 }
@@ -167,18 +172,20 @@ impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> {
 /// moved it will change the stream.
 pub struct UniqueSeqStream;
 
-impl<Itype: PcgOps> Stream<Itype> for UniqueSeqStream {
+impl<Itype> Stream<Itype> for UniqueSeqStream 
+    where 
+    Itype: FromPrimitive {
     fn build() -> Self {
         UniqueSeqStream
     }
     
     #[inline(always)]
     fn increment(&self) -> Itype {
-        Itype::from_usize(self as *const UniqueSeqStream as usize | 1)
+        Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
     }
     
     fn get_stream(&self) -> Itype {
-        Itype::from_usize(self as *const UniqueSeqStream as usize | 1)
+        Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
     }
 }
 

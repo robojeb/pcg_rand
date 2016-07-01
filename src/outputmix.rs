@@ -24,7 +24,7 @@
  *     http://www.pcg-random.org
  */
 
-use num_traits::{PrimInt, ToPrimitive};
+use num_traits::{PrimInt};
 use ::numops::*;
 use std::ops::{Shr, BitXor};
 
@@ -40,7 +40,7 @@ pub struct XshRsMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin 
     where 
-    Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + AsSmaller<Xtype> + BitSize + ToPrimitive + Copy, 
+    Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + AsSmaller<Xtype> + BitSize + AsUsize + Copy, 
     Xtype: BitSize {
     
     #[inline(always)]
@@ -60,7 +60,7 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
         let xshift = topspare + (Xtype::bits()+maxrandshift)/2;
         
         let rshift = if opbits != 0 {
-            (state >> (Itype::bits() - opbits)).to_usize().unwrap() & mask
+            (state >> (Itype::bits() - opbits)).as_usize() & mask
         } else {
             0
         };
@@ -74,7 +74,7 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
 pub struct XshRrMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin 
-    where Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + ToPrimitive + AsSmaller<Xtype> + BitSize + Copy, 
+    where Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + AsUsize + AsSmaller<Xtype> + BitSize + Copy, 
     Xtype: BitSize + PrimInt {
     
     #[inline(always)]
@@ -101,7 +101,7 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin
         let xshift = (topspare + xtypebits)/2;
         
         let rot = if opbits != 0 {
-            (state >> (Itype::bits() - opbits)).to_usize().unwrap() & mask
+            (state >> (Itype::bits() - opbits)).as_usize() & mask
         } else { 0 };
 
         let amprot = (rot << amplifier) & mask;

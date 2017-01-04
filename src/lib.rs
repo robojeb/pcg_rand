@@ -84,6 +84,7 @@
 //! #How to Use
 //! The simple generators work like the other Rng's from the `rand` crate.
 //! You can create a PCG as follows
+//!
 //! ```
 //! use pcg_rand::Pcg32;
 //! 
@@ -94,6 +95,7 @@
 //! 
 //! The extended generators can be built in two ways, either by creating one 
 //! directly, or by building them from a generator at its current state.
+//!
 //! ```
 //! use pcg_rand::extension::{Pcg32Ext, ExtPcg, Ext256};
 //! use pcg_rand::Pcg32Unique;

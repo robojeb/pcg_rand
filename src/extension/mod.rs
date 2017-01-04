@@ -17,21 +17,22 @@
  *
  */
 
-/// Extended PCG generators utilize a simple method to dramatically extend the 
-/// period of the genrators. In addition to extending the period of the 
-/// generator it ensures that the generators have K-dimensional
-/// equidistribution. This means that the generator will produce every possible
-/// K-tuple uniformly. 
-/// 
-/// These generators require `K*sizeof(Isize)` extra bytes to provide their 
-/// equidistribution. 
-/// 
-/// These extended generators are currently in a beta state. They are 
-/// implemented according to my understanding of the generator extension 
-/// technique presented in the PCG paper. 
-/// You can use these generators if you want, and if you would like to help
-/// me review the code and determine if my implementation is correct that would
-/// be wonderful. 
+//! Extended PCG generators utilize a simple method to dramatically extend the 
+//! period of the genrators. In addition to extending the period of the 
+//! generator it ensures that the generators have K-dimensional
+//! equidistribution. This means that the generator will produce every possible
+//! K-tuple uniformly. 
+//! 
+//! These generators require `K*sizeof(Isize)` extra bytes to provide their 
+//! equidistribution. 
+//! 
+//! These extended generators are currently in a beta state. They are 
+//! implemented according to my understanding of the generator extension 
+//! technique presented in the PCG paper. 
+//! You can use these generators if you want, and if you would like to help
+//! me review the code and determine if my implementation is correct that would
+//! be wonderful. 
+
 pub mod extsizes;
 
 pub use self::extsizes::*;

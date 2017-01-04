@@ -220,7 +220,6 @@ impl<Itype, Xtype,MulMix, OutMix, Size> SeedableRng<[Itype; 2]> for ExtPcg<Itype
 
 impl<Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<[u64; 2]> for ExtPcg<u128, Xtype, StreamMix, MulMix, OutMix, Size> 
     where 
-    u128: PcgOps + BitSize + Clone + AsSmaller<Xtype>,
     Xtype: PcgOps + BitSize + Rand, 
     StreamMix: Stream<u128>, 
     MulMix: Multiplier<u128>, 
@@ -247,7 +246,6 @@ impl<Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<[u64; 2]> for ExtPcg<u1
 
 impl<Xtype,MulMix, OutMix, Size> SeedableRng<[u64; 4]> for ExtPcg<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix, Size> 
     where 
-    u128: AsSmaller<Xtype>,
     Xtype: PcgOps + BitSize + Rand, 
     SpecificSeqStream<u128>: Stream<u128>, 
     MulMix: Multiplier<u128>, 

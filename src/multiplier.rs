@@ -23,14 +23,14 @@
  *
  *     http://www.pcg-random.org
  */
-
-use extprim::u128::u128;
+#[cfg(feature = "extprim_u128")]
+use extprim::u128::u128 as eu128;
 
 /// This trait provides the multiplier for the internal LCG of the PCG generator
 /// Implementing this trait for a struct will allow providing your own
 /// multiplier for the PCG.
 pub trait Multiplier<Itype> {
-    fn multiplier() -> Itype;
+    fn multiplier(&self) -> Itype;
 }
 
 /// Provides a default "good" multiplier based on the multiplier provided
@@ -41,7 +41,7 @@ macro_rules! make_default_mul {
 	( $( $t:ty => $e:expr);* ) => {
 		$(impl Multiplier<$t> for DefaultMultiplier {
 			#[inline]
-			fn multiplier() -> $t {
+			fn multiplier(&self) -> $t {
 				$e
 			}
 		})*
@@ -52,8 +52,12 @@ make_default_mul!(
     u8 => 141u8;
     u16 => 12829u16;
     u32 => 747796405u32;
-    u64 => 6364136223846793005u64;
-    u128 => u128::from_parts(2549297995355413924, 4865540595714422341)
+    u64 => 6364136223846793005u64
+);
+
+#[cfg(feature = "extprim_u128")]
+make_default_mul!(
+	eu128 => eu128::from_parts(2549297995355413924, 4865540595714422341)
 );
 
 /// Provides a default "good" multiplier based on the multiplier provided
@@ -64,7 +68,7 @@ macro_rules! make_mcg_mul {
 	     ( $( $t:ty => $e:expr);* ) => {
 	       $( impl Multiplier<$t> for McgMultiplier {
 	       	  #[inline]
-		  fn multiplier() -> $t {
+		  fn multiplier(&self) -> $t {
 		     $e
 		  }
 		})*
@@ -75,6 +79,11 @@ make_mcg_mul!(
     u8 => 217u8;
     u16 => 62169u16;
     u32 => 277803737u32;
-    u64 => 12605985483714917081u64;
-    u128 => u128::from_parts(17766728186571221404,12605985483714917081)
+    u64 => 12605985483714917081u64
+);
+
+
+#[cfg(feature = "extprim_u128")]
+make_mcg_mul!(
+	eu128 => eu128::from_parts(17766728186571221404,12605985483714917081)
 );

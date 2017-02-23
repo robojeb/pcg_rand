@@ -26,9 +26,12 @@
 
 use ::numops::PcgOps;
 use rand::{Rng, Rand};
-use extprim::u128::u128;
+#[cfg(feature = "extprim_u128")]
+use extprim::u128::u128 as eu128;
 use num_traits::{One, FromPrimitive};
 use std::ops::BitOr;
+
+use std::marker::PhantomData;
 
 /// A stream provides the increment to the LCG. This increment should be
 /// an odd number or the period of the generator will not be the full size
@@ -48,13 +51,17 @@ pub trait Stream<Itype> {
 /// This sequence stream defines constants as provided by the PCG paper.
 /// This struct is implemented with a macro to provide values for each
 /// Stream<Itype>.
-pub struct OneSeqStream;
+pub struct OneSeqStream<Itype> {
+    phantom: PhantomData<Itype>,   
+}
 
 macro_rules! make_one_seq {
     ( $( $t:ty => $e:expr);* ) => {
-		$(impl Stream<$t> for OneSeqStream {
+		$(impl Stream<$t> for OneSeqStream<$t> {
             fn build() -> Self {
-                OneSeqStream
+                OneSeqStream{
+                    phantom: PhantomData::<$t>,
+                }
             }
 
             #[inline(always)]    
@@ -71,26 +78,36 @@ macro_rules! make_one_seq {
 
 make_one_seq!{
     u32  => 2891336453u32;
-    u64  => 1442695040888963407u64;
-    u128 => u128::from_parts(6364136223846793005,1442695040888963407)
+    u64  => 1442695040888963407u64
 }
 
-impl Rand for OneSeqStream {
+#[cfg(feature = "extprim_u128")]
+make_one_seq!{
+    eu128 => eu128::from_parts(6364136223846793005,1442695040888963407)
+}
+
+impl<Itype> Rand for OneSeqStream<Itype> 
+    where OneSeqStream<Itype> : Stream<Itype> 
+{
     fn rand<R: Rng>(_rng: &mut R) -> Self {
-        OneSeqStream
+        OneSeqStream::build()
     }
 }
 
 /// This stream provides an increment of 0 to the LCG. This turns the
 /// LCG into a MCG, which while being less statistically sound than an LCG,
 /// it is faster.
-pub struct NoSeqStream;
+pub struct NoSeqStream<Itype> {
+    phantom: PhantomData<Itype>,   
+}
 
 macro_rules! make_no_seq {
     ( $( $t:ty => $e:expr);* ) => {
-		$(impl Stream<$t> for NoSeqStream {
+		$(impl Stream<$t> for NoSeqStream<$t> {
             fn build() -> Self {
-                NoSeqStream
+                NoSeqStream{
+                    phantom: PhantomData::<$t>,
+                }
             }
 
             #[inline(always)]    
@@ -107,13 +124,19 @@ macro_rules! make_no_seq {
 
 make_no_seq!{
     u32  => 0;
-    u64  => 0;
-    u128 => u128::zero()
+    u64  => 0
 }
 
-impl Rand for NoSeqStream {
+#[cfg(feature = "extprim_u128")]
+make_no_seq!{
+    eu128 => eu128::zero()
+}
+
+impl<Itype> Rand for NoSeqStream<Itype>  
+    where NoSeqStream<Itype> : Stream<Itype> 
+{
     fn rand<R: Rng>(_rng: &mut R) -> Self {
-        NoSeqStream
+        NoSeqStream::build()
     }
 }
 
@@ -151,11 +174,16 @@ macro_rules! make_set_seq {
 
 make_set_seq!{
     u32 => 2891336453u32;
-    u64 => 1442695040888963407u64;
-    u128 => u128::from_parts(6364136223846793005,1442695040888963407)
+    u64 => 1442695040888963407u64
+    
 }
 
-impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> 
+#[cfg(feature = "extprim_u128")]
+make_set_seq!{
+    eu128 => eu128::from_parts(6364136223846793005,1442695040888963407)
+}
+
+impl<Itype: Rand> Rand for SpecificSeqStream<Itype> 
     where 
     Itype: Rand + BitOr<Itype, Output=Itype> + One
 {
@@ -170,27 +198,33 @@ impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype>
 /// generator in memory. This means that two PCG with the same seed 
 /// can produce different sequences of numbers. Though if the generator is
 /// moved it will change the stream.
-pub struct UniqueSeqStream;
+pub struct UniqueSeqStream<Itype> {
+    phantom: PhantomData<Itype>,   
+}
 
-impl<Itype> Stream<Itype> for UniqueSeqStream 
+impl<Itype> Stream<Itype> for UniqueSeqStream<Itype>
     where 
     Itype: FromPrimitive {
     fn build() -> Self {
-        UniqueSeqStream
+        UniqueSeqStream {
+            phantom: PhantomData::<Itype>,
+        }
     }
     
     #[inline(always)]
     fn increment(&self) -> Itype {
-        Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
+        Itype::from_usize(self as *const UniqueSeqStream<Itype> as usize | 1).unwrap()
     }
     
     fn get_stream(&self) -> Itype {
-        Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
+        Itype::from_usize(self as *const UniqueSeqStream<Itype> as usize | 1).unwrap()
     }
 }
 
-impl Rand for UniqueSeqStream {
+impl<Itype> Rand for UniqueSeqStream<Itype>  
+    where UniqueSeqStream<Itype> : Stream<Itype> 
+{
     fn rand<R: Rng>(_rng: &mut R) -> Self {
-        UniqueSeqStream
+        UniqueSeqStream::build()
     }
 }

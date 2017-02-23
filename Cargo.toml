@@ -24,7 +24,15 @@ name = "pcg_demo"
 path = "src/main.rs"
 
 [dependencies]
-
 rand = "0.3.13"
-extprim = "1.0.0"
 num-traits = "0.1.32"
+
+[dependencies.extprim]
+version = "1.0.0"
+optional = true
+
+[features]
+#By default use extprim feature
+default = ["extprim_u128"]
+
+extprim_u128 = ["extprim"]

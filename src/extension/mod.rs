@@ -37,7 +37,6 @@ pub mod extsizes;
 
 pub use self::extsizes::*;
 
-use extprim::u128::u128;
 use rand::{Rng, Rand, SeedableRng};
 use std::marker::PhantomData;
 use super::PcgEngine;
@@ -46,6 +45,10 @@ use super::stream::*;
 use super::outputmix::*;
 use super::multiplier::*;
 use num_traits::Zero;
+
+macro_rules! extended_PCG {
+    () => ()
+}
 
 /// An extended PCG generator. These generators provide K-dimensional 
 /// equidistribution. Where K is specified by the value of the Size parameter
@@ -65,7 +68,6 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
     ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
     where
     Itype: Zero,
-    Xtype: PcgOps + BitSize + Rand, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>,
@@ -102,7 +104,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
 
 impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
     ExtPcg<Itype, u32, StreamMix, MulMix, OutMix, Size>
-    where Itype: PcgOps + AsUsize + BitSize + AsSmaller<u32> + Clone, 
+    where Itype: Clone, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, u32>,
@@ -124,7 +126,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
 
 impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
     ExtPcg<Itype, u64, StreamMix, MulMix, OutMix, Size>
-    where Itype: PcgOps + AsUsize + BitSize + AsSmaller<u64> + Clone, 
+    where Itype: Clone, 
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, u64>,
@@ -164,109 +166,109 @@ pub type Pcg64Ext<Size> = SetseqXshRr12864ext<Size>;
 // Seeding for the ExtPcgs
 //
 
-//These generics get pretty insane
-impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<Itype> for ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where 
-    Itype: Zero,
-    Xtype: PcgOps + BitSize + Rand, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>,
-    Size: ExtSize, ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> : Rng,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : Rng + SeedableRng<Itype>
+// //These generics get pretty insane
+// impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<Itype> for ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
+//     where 
+//     Itype: Zero,
+//     Xtype: PcgOps + BitSize + Rand, 
+//     StreamMix: Stream<Itype>, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, Xtype>,
+//     Size: ExtSize, ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> : Rng,
+//     PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : Rng + SeedableRng<Itype>
     
-{
-    fn reseed(&mut self, seed: Itype) {
-        //Update the PCG
-        self.pcg.reseed(seed);
+// {
+//     fn reseed(&mut self, seed: Itype) {
+//         //Update the PCG
+//         self.pcg.reseed(seed);
 
-        //Update the extension array
-        for i in 0..Size::ext_size() {
-            self.ext[i] = self.pcg.gen();
-        }
-    }
+//         //Update the extension array
+//         for i in 0..Size::ext_size() {
+//             self.ext[i] = self.pcg.gen();
+//         }
+//     }
     
-    fn from_seed(seed: Itype) -> Self {
-        let pcg = PcgEngine::from_seed(seed);
-        ExtPcg::from_pcg(pcg)
-    }
-}
+//     fn from_seed(seed: Itype) -> Self {
+//         let pcg = PcgEngine::from_seed(seed);
+//         ExtPcg::from_pcg(pcg)
+//     }
+// }
 
-impl<Itype, Xtype,MulMix, OutMix, Size> SeedableRng<[Itype; 2]> for ExtPcg<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix, Size> 
-    where 
-    Itype: Zero,
-    Xtype: PcgOps + BitSize + Rand, 
-    SpecificSeqStream<Itype>: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>,
-    Size: ExtSize, ExtPcg<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix, Size> : Rng,
-    PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> : Rng + SeedableRng<[Itype; 2]>
+// impl<Itype, Xtype,MulMix, OutMix, Size> SeedableRng<[Itype; 2]> for ExtPcg<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix, Size> 
+//     where 
+//     Itype: Zero,
+//     Xtype: PcgOps + BitSize + Rand, 
+//     SpecificSeqStream<Itype>: Stream<Itype>, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, Xtype>,
+//     Size: ExtSize, ExtPcg<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix, Size> : Rng,
+//     PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> : Rng + SeedableRng<[Itype; 2]>
     
-{
-    fn reseed(&mut self, seed: [Itype; 2]) {
-        //Update the PCG
-        self.pcg.reseed(seed);
+// {
+//     fn reseed(&mut self, seed: [Itype; 2]) {
+//         //Update the PCG
+//         self.pcg.reseed(seed);
 
-        //Update the extension array
-        for i in 0..Size::ext_size() {
-            self.ext[i] = self.pcg.gen();
-        }
-    }
+//         //Update the extension array
+//         for i in 0..Size::ext_size() {
+//             self.ext[i] = self.pcg.gen();
+//         }
+//     }
     
-    fn from_seed(seed: [Itype; 2]) -> Self {
-        let pcg = PcgEngine::from_seed(seed);
-        ExtPcg::from_pcg(pcg)
-    }
-}
+//     fn from_seed(seed: [Itype; 2]) -> Self {
+//         let pcg = PcgEngine::from_seed(seed);
+//         ExtPcg::from_pcg(pcg)
+//     }
+// }
 
-impl<Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<[u64; 2]> for ExtPcg<u128, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where 
-    Xtype: PcgOps + BitSize + Rand, 
-    StreamMix: Stream<u128>, 
-    MulMix: Multiplier<u128>, 
-    OutMix: OutputMixin<u128, Xtype>,
-    Size: ExtSize, ExtPcg<u128, Xtype, StreamMix, MulMix, OutMix, Size> : Rng,
-    PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> : Rng + SeedableRng<[u64; 2]>
+// impl<Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<[u64; 2]> for ExtPcg<u128, Xtype, StreamMix, MulMix, OutMix, Size> 
+//     where 
+//     Xtype: PcgOps + BitSize + Rand, 
+//     StreamMix: Stream<u128>, 
+//     MulMix: Multiplier<u128>, 
+//     OutMix: OutputMixin<u128, Xtype>,
+//     Size: ExtSize, ExtPcg<u128, Xtype, StreamMix, MulMix, OutMix, Size> : Rng,
+//     PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> : Rng + SeedableRng<[u64; 2]>
     
-{
-    fn reseed(&mut self, seed: [u64; 2]) {
-        //Update the PCG
-        self.pcg.reseed(seed);
+// {
+//     fn reseed(&mut self, seed: [u64; 2]) {
+//         //Update the PCG
+//         self.pcg.reseed(seed);
 
-        //Update the extension array
-        for i in 0..Size::ext_size() {
-            self.ext[i] = self.pcg.gen();
-        }
-    }
+//         //Update the extension array
+//         for i in 0..Size::ext_size() {
+//             self.ext[i] = self.pcg.gen();
+//         }
+//     }
     
-    fn from_seed(seed: [u64; 2]) -> Self {
-        let pcg = PcgEngine::from_seed(seed);
-        ExtPcg::from_pcg(pcg)
-    }
-}
+//     fn from_seed(seed: [u64; 2]) -> Self {
+//         let pcg = PcgEngine::from_seed(seed);
+//         ExtPcg::from_pcg(pcg)
+//     }
+// }
 
-impl<Xtype,MulMix, OutMix, Size> SeedableRng<[u64; 4]> for ExtPcg<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix, Size> 
-    where 
-    Xtype: PcgOps + BitSize + Rand, 
-    SpecificSeqStream<u128>: Stream<u128>, 
-    MulMix: Multiplier<u128>, 
-    OutMix: OutputMixin<u128, Xtype>,
-    Size: ExtSize, ExtPcg<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix, Size> : Rng,
-    PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> : Rng + SeedableRng<[u64; 4]>
+// impl<Xtype,MulMix, OutMix, Size> SeedableRng<[u64; 4]> for ExtPcg<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix, Size> 
+//     where 
+//     Xtype: PcgOps + BitSize + Rand, 
+//     SpecificSeqStream<u128>: Stream<u128>, 
+//     MulMix: Multiplier<u128>, 
+//     OutMix: OutputMixin<u128, Xtype>,
+//     Size: ExtSize, ExtPcg<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix, Size> : Rng,
+//     PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> : Rng + SeedableRng<[u64; 4]>
     
-{
-    fn reseed(&mut self, seed: [u64; 4]) {
-        //Update the PCG
-        self.pcg.reseed(seed);
+// {
+//     fn reseed(&mut self, seed: [u64; 4]) {
+//         //Update the PCG
+//         self.pcg.reseed(seed);
 
-        //Update the extension array
-        for i in 0..Size::ext_size() {
-            self.ext[i] = self.pcg.gen();
-        }
-    }
+//         //Update the extension array
+//         for i in 0..Size::ext_size() {
+//             self.ext[i] = self.pcg.gen();
+//         }
+//     }
     
-    fn from_seed(seed: [u64; 4]) -> Self {
-        let pcg = PcgEngine::from_seed(seed);
-        ExtPcg::from_pcg(pcg)
-    }
-}
+//     fn from_seed(seed: [u64; 4]) -> Self {
+//         let pcg = PcgEngine::from_seed(seed);
+//         ExtPcg::from_pcg(pcg)
+//     }
+// }

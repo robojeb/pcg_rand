@@ -24,90 +24,135 @@
  *     http://www.pcg-random.org
  */
 
-use num_traits::{PrimInt};
 use ::numops::*;
-use std::ops::{Shr, BitXor};
+#[cfg(feature = "extprim_u128")]
+use extprim::u128::u128 as eu128;
 
 /// The output mixin trait provides the permutation function for the output
 /// of the PCG. After the LCG state is advanced the state is run through
 /// the `output(...)` function to produce the output. 
 pub trait OutputMixin<Itype, Xtype> {
-    fn output(state : Itype) -> Xtype;
+    fn output(&self, state : Itype) -> Xtype;
 }
 
 /// This output uses an Xor-shift followed by a right shift
 pub struct XshRsMixin;
 
-impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin 
-    where 
-    Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + AsSmaller<Xtype> + BitSize + AsUsize + Copy, 
-    Xtype: BitSize {
-    
-    #[inline(always)]
-    fn output(state : Itype) -> Xtype {
-        let mut state = state;
-        let sparebits = Itype::bits() - Xtype::bits();
-        
-        let opbits : usize = if sparebits - 5 >= 64 { 5 } else
-                        if sparebits - 4 >= 32 { 4 } else
-                        if sparebits - 3 >= 16 { 3 } else 
-                        if sparebits - 2 >= 4  { 2 } else
-                        if sparebits - 1 >= 1  { 1 } else { 0 };
-        let mask = (1 << opbits) -1;
-        let maxrandshift = mask;
-        let topspare = opbits;
-        let bottomspare = sparebits - topspare;
-        let xshift = topspare + (Xtype::bits()+maxrandshift)/2;
-        
-        let rshift = if opbits != 0 {
-            (state >> (Itype::bits() - opbits)).as_usize() & mask
-        } else {
-            0
-        };
-        
-        state = state ^ (state >> xshift);
-        (state >> (bottomspare - maxrandshift + rshift)).shrink()
-    }        
+macro_rules! make_XshRsMixin {
+    ($( $itype:ty=$ibits:expr, $xtype:ty=$xbits:expr );*) => (
+        $(
+            impl OutputMixin<$itype, $xtype> for XshRsMixin {
+                
+                #[inline(always)]
+                fn output(&self, state : $itype) -> $xtype {
+                    let mut state = state;
+                    let sparebits = $ibits - $xbits;
+                    
+                    let opbits : usize = if sparebits - 5 >= 64 { 5 } else
+                                    if sparebits - 4 >= 32 { 4 } else
+                                    if sparebits - 3 >= 16 { 3 } else 
+                                    if sparebits - 2 >= 4  { 2 } else
+                                    if sparebits - 1 >= 1  { 1 } else { 0 };
+                    let mask = (1 << opbits) -1;
+                    let maxrandshift = mask;
+                    let topspare = opbits;
+                    let bottomspare = sparebits - topspare;
+                    let xshift = topspare + ($xbits+maxrandshift)/2;
+                    
+                    let rshift = if opbits != 0 {
+                        (state >> ($ibits - opbits)).as_usize() & mask
+                    } else {
+                        0
+                    };
+                    
+                    state = state ^ (state >> xshift);
+                    (state >> (bottomspare - maxrandshift + rshift)).shrink()
+                }        
+            }
+        )*
+    )
+}
+
+make_XshRsMixin! {
+    u32=32, u8=8;
+    u32=32, u16=16;
+    u64=64, u16=16;
+    u64=64, u32=32
+}
+
+#[cfg(feature = "extprim_u128")]
+make_XshRsMixin! {
+    eu128=128, u32=32;
+    eu128=128, u64=64
+}
+
+#[cfg(feature = "i128_type")]
+make_XshRsMixin! {
+    u128=128, u32=32;
+    u128=128, u64=64
 }
 
 /// This output uses an xor-shift followed by a random rotation.
 pub struct XshRrMixin;
 
-impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin 
-    where Itype: Shr<usize, Output=Itype> + BitXor<Itype, Output=Itype> + AsUsize + AsSmaller<Xtype> + BitSize + Copy, 
-    Xtype: BitSize + PrimInt {
-    
-    #[inline(always)]
-    fn output(state : Itype) -> Xtype {
-        let mut state = state;
-        
-        let sparebits = Itype::bits() - Xtype::bits();
-        let xtypebits = Xtype::bits();
-        let wantedopbits : usize = if xtypebits >= 128 { 7 } else 
-                            if xtypebits >= 64 { 6 } else 
-                            if xtypebits >= 32 { 5 } else
-                            if xtypebits >= 16 { 4 } else { 3 };
-        
-        let opbits : usize = if sparebits >= wantedopbits { 
-            wantedopbits 
-        } else { 
-            sparebits 
-        }; 
-        
-        let amplifier = wantedopbits - opbits;
-        let mask = (1 << opbits) - 1;
-        let topspare = opbits;
-        let bottomspare = sparebits - topspare;
-        let xshift = (topspare + xtypebits)/2;
-        
-        let rot = if opbits != 0 {
-            (state >> (Itype::bits() - opbits)).as_usize() & mask
-        } else { 0 };
+macro_rules! make_XshRrMixin {
+    ($( $itype:ty=$ibits:expr, $xtype:ty=$xbits:expr );*) => ( 
+        $(
+            impl OutputMixin<$itype, $xtype> for XshRrMixin {
+                
+                #[inline(always)]
+                fn output(&self, state : $itype) -> $xtype {
+                    let mut state = state;
+                    
+                    let sparebits = $ibits - $xbits;
+                    let xtypebits = $xbits;
+                    let wantedopbits : usize = if xtypebits >= 128 { 7 } else 
+                                        if xtypebits >= 64 { 6 } else 
+                                        if xtypebits >= 32 { 5 } else
+                                        if xtypebits >= 16 { 4 } else { 3 };
+                    
+                    let opbits : usize = if sparebits >= wantedopbits { 
+                        wantedopbits 
+                    } else { 
+                        sparebits 
+                    }; 
+                    
+                    let amplifier = wantedopbits - opbits;
+                    let mask = (1 << opbits) - 1;
+                    let topspare = opbits;
+                    let bottomspare = sparebits - topspare;
+                    let xshift = (topspare + xtypebits)/2;
+                    
+                    let rot = if opbits != 0 {
+                        (state >> ($ibits - opbits)).as_usize() & mask
+                    } else { 0 };
 
-        let amprot = (rot << amplifier) & mask;
-        state = state ^ (state >> xshift);
+                    let amprot = (rot << amplifier) & mask;
+                    state = state ^ (state >> xshift);
 
-        let result : Xtype = (state >> bottomspare).shrink();
-        result.rotate_right(amprot as u32)
-    }        
+                    let result : $xtype = (state >> bottomspare).shrink();
+                    result.rotate_right(amprot as u32)
+                }        
+            }
+        )*
+    )
+}
+
+make_XshRrMixin! {
+    u32=32, u8=8;
+    u32=32, u16=16;
+    u64=64, u16=16;
+    u64=64, u32=32
+}
+
+#[cfg(feature = "extprim_u128")]
+make_XshRrMixin! {
+    eu128=128, u32=32;
+    eu128=128, u64=64
+}
+
+#[cfg(feature = "i128_type")]
+make_XshRrMixin! {
+    u128=128, u32=32;
+    u128=128, u64=64
 }

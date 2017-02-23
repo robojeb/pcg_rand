@@ -17,7 +17,8 @@
  *
  */
  
-use extprim::u128::u128;
+#[cfg(feature = "extprim_u128")]
+use extprim::u128::u128 as eu128;
 
 /// The types of numaric options that PCG needs to operate. 
 /// Some day this will be replaced with Num-traits when they support
@@ -46,28 +47,10 @@ pub trait AsSmaller<T> {
 //Implementations of the traits for basic types
 macro_rules! basic_ops {
     ( $( $t:ty, $bits:expr);*) => {
-        $(impl BitSize for $t {
-            #[inline]
-            fn bits() -> usize {
-                $bits
-            }
-        }
-
+        $(
         impl AsUsize for $t {
             fn as_usize(&self) -> usize {
                 *self as usize
-            }
-        }
-        
-        impl PcgOps for $t {
-            #[inline]
-            fn wrap_mul(&self, rhs : $t) -> $t {
-                self.wrapping_mul(rhs) 
-            }
-            
-            #[inline]
-            fn wrap_add(&self, rhs : $t) -> $t {
-                self.wrapping_add(rhs)
             }
         }
             
@@ -103,40 +86,25 @@ smaller!(
     u16, u8
 );
 
-impl AsSmaller<u64> for u128 {
+#[cfg(feature = "extprim_u128")]
+impl AsSmaller<u64> for eu128 {
     fn shrink(self) -> u64 {
         //Truncate the number
         self.low64()
     }
 }
 
-impl AsSmaller<u32> for u128 {
+#[cfg(feature = "extprim_u128")]
+impl AsSmaller<u32> for eu128 {
     fn shrink(self) -> u32 {
         //Truncate the number
         self.low64() as u32
     }
 }
 
-impl BitSize for u128 {
-    fn bits() -> usize {
-        128
-    }
-}
-
-impl AsUsize for u128 {
+#[cfg(feature = "extprim_u128")]
+impl AsUsize for eu128 {
     fn as_usize(&self) -> usize {
         self.low64() as usize
-    }
-}
-
-impl PcgOps for u128 {
-    #[inline]
-    fn wrap_mul(&self, rhs : u128) -> u128 {
-        self.wrapping_mul(rhs) 
-    }
-    
-    #[inline]
-    fn wrap_add(&self, rhs : u128) -> u128 {
-        self.wrapping_add(rhs)
     }
 }

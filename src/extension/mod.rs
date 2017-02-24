@@ -46,121 +46,224 @@ use super::outputmix::*;
 use super::multiplier::*;
 use num_traits::Zero;
 
-macro_rules! extended_PCG {
-    () => ()
-}
 
-/// An extended PCG generator. These generators provide K-dimensional 
-/// equidistribution. Where K is specified by the value of the Size parameter
-/// which must be an ExtSize type.
-pub struct ExtPcg<Itype, Xtype, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>, 
-    Size: ExtSize> 
-{
-    pcg : PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>,
-    ext : Vec<Xtype>,
-    _size : PhantomData<Size>,
-}
+#[cfg(feature = "extprim_u128")]
+use extprim::u128::u128 as eu128;
 
-impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where
-    Itype: Zero,
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>,
-    Size: ExtSize,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng
-{
+macro_rules! impl_ext_rng {
+    ($name:ident, $itype:ident, u32) => (
+        impl<Size: ExtSize> Rng for $name<Size> {
+            #[inline]
+            fn next_u32(&mut self) -> u32 {
+                let oldstate = self.pcg.state.clone();
+                let inc : $itype = self.pcg.stream_mix.increment();
+                let mul : $itype = self.pcg.mul_mix.multiplier();
+                self.pcg.state = inc.wrapping_add(oldstate.wrapping_mul(mul));
 
-    /// Create a new ExtPcg from an existing PCG. This will consume
-    /// Size random values to initialize the extension array.
-    pub fn from_pcg(pcg: PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>) ->
-        ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> {
-            let mut pcg = pcg;
+                let mask = 2usize.pow(Size::ext_bits() as u32)-1;
+                let pick = self.pcg.state.as_usize() & mask;
 
-            //Create the starting extension array
-            let mut ext = Vec::new();
-            for _ in 0..Size::ext_size() {
-                ext.push(pcg.gen());
+                let ext_val = self.ext[pick];
+                self.ext[pick] = self.ext[pick] + 1;
+                let out : u32 = self.pcg.out_mix.output(oldstate);
+                out ^ ext_val
+            }
+        }
+    );
+
+    ($name: ident, $itype:ident, u64) => (
+        impl<Size: ExtSize> Rng for $name<Size> {
+            #[inline]
+            fn next_u32(&mut self) -> u32 {
+                self.next_u64() as u32
             }
 
-            ExtPcg {
-                pcg : pcg,
-                ext : ext,
-                _size : PhantomData::<Size>,
+            #[inline]
+            fn next_u64(&mut self) -> u64 {
+                let oldstate = self.pcg.state.clone();
+                let inc : $itype = self.pcg.stream_mix.increment();
+                let mul : $itype = self.pcg.mul_mix.multiplier();
+                self.pcg.state = inc.wrapping_add(oldstate.wrapping_mul(mul));
+                
+                let mask = 2usize.pow(Size::ext_bits() as u32)-1;
+                let pick = self.pcg.state.as_usize() & mask;
+
+                let ext_val = self.ext[pick];
+                self.ext[pick] = self.ext[pick] + 1;
+                let out : u64 = self.pcg.out_mix.output(oldstate);
+                out ^ ext_val
             }
-    }
-
-    /// Create a new unseeded ExtPcg. 
-    pub fn new_unseeded() -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    {
-        let pcg = PcgEngine::<Itype, Xtype, StreamMix, MulMix, OutMix>::new_unseeded();
-        Self::from_pcg(pcg)
-    }            
+        }
+    )
 }
 
-impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
-    ExtPcg<Itype, u32, StreamMix, MulMix, OutMix, Size>
-    where Itype: Clone, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, u32>,
-    Size: ExtSize {
+macro_rules! extended_pcg {
+    ($(pub type $name:ident<Size> = ExtPcg<$itype:ident, $xtype:ident, $stream:ident, $mul:ident, $mix:ident>);*) => (
+        $(pub struct $name<Size> {
+            pcg     : PcgEngine<$itype, $xtype, $stream<$itype>, $mul, $mix>,
+            ext     : Vec<$xtype>,
+            _size   : PhantomData<Size>,
+        }
 
-    #[inline]
-    fn next_u32(&mut self) -> u32 {
-        let oldstate = self.pcg.state.clone();
-        self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
+        impl<Size: ExtSize> $name<Size> {
+            pub fn from_pcg(pcg: PcgEngine<$itype, $xtype, $stream<$itype>, $mul, $mix>) -> $name<Size> {
+                let mut pcg = pcg;
 
-        let mask = 2usize.pow(Size::ext_bits() as u32)-1;
-        let pick = self.pcg.state.as_usize() & mask;
+                let mut ext = Vec::new();
+                for _ in 0..Size::ext_size() {
+                    ext.push(pcg.gen());
+                }
 
-        let ext_val = self.ext[pick];
-        self.ext[pick] = self.ext[pick] + 1;
-        OutMix::output(oldstate) ^ ext_val
-    }
+                $name {
+                    pcg : pcg,
+                    ext : ext,
+                    _size : PhantomData::<Size>,
+                }
+            }
+
+            pub fn new_unseeded() -> $name<Size> {
+                let pcg = PcgEngine::<$itype, $xtype, $stream<$itype>, $mul, $mix>::new_unseeded();
+                Self::from_pcg(pcg)
+            }
+        }
+
+        impl_ext_rng!($name, $itype, $xtype);
+        )*
+    )
 }
 
-impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
-    ExtPcg<Itype, u64, StreamMix, MulMix, OutMix, Size>
-    where Itype: Clone, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, u64>,
-    Size: ExtSize {
 
-    #[inline]
-    fn next_u32(&mut self) -> u32 {
-        self.next_u64() as u32
-    }
+extended_pcg! (
+    pub type SetseqXshRr6432ext<Size> = ExtPcg<u64, u32, SpecificSeqStream, DefaultMultiplier, XshRrMixin>
+);
 
-    #[inline]
-    fn next_u64(&mut self) -> u64 {
-        let oldstate = self.pcg.state.clone();
-        self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
-        
-        let mask = 2usize.pow(Size::ext_bits() as u32)-1;
-        let pick = self.pcg.state.as_usize() & mask;
-
-        let ext_val = self.ext[pick];
-        self.ext[pick] = self.ext[pick] + 1;
-        OutMix::output(oldstate) ^ ext_val
-    }
-}
-
-pub type SetseqXshRr6432ext<Size> = ExtPcg<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin, Size>;
-pub type SetseqXshRr12832ext<Size> = ExtPcg<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
-pub type SetseqXshRr12864ext<Size> = ExtPcg<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
+#[cfg(feature = "extprim_u128")]
+extended_pcg! (
+    pub type SetseqXshRr12832ext<Size> = ExtPcg<eu128, u32, SpecificSeqStream, DefaultMultiplier, XshRrMixin>;
+    pub type SetseqXshRr12864ext<Size> = ExtPcg<eu128, u64, SpecificSeqStream, DefaultMultiplier, XshRrMixin>
+);
 
 /// The extended version of the Pcg32 generator
 pub type Pcg32Ext<Size> = SetseqXshRr6432ext<Size>;
 /// The extended version of the Pcg32L generator
+#[cfg(feature = "extprim_u128")]
 pub type Pcg32LExt<Size> = SetseqXshRr12832ext<Size>;
 /// The extended version of the Pcg64 generator
+#[cfg(feature = "extprim_u128")]
 pub type Pcg64Ext<Size> = SetseqXshRr12864ext<Size>;
+
+// / An extended PCG generator. These generators provide K-dimensional 
+// / equidistribution. Where K is specified by the value of the Size parameter
+// / which must be an ExtSize type.
+// pub struct ExtPcg<Itype, Xtype, 
+//     StreamMix: Stream<Itype>, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, Xtype>, 
+//     Size: ExtSize> 
+// {
+//     pcg : PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>,
+//     ext : Vec<Xtype>,
+//     _size : PhantomData<Size>,
+// }
+
+// impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
+//     ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
+//     where
+//     Itype: Zero,
+//     StreamMix: Stream<Itype>, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, Xtype>,
+//     Size: ExtSize,
+//     PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng
+// {
+
+//     /// Create a new ExtPcg from an existing PCG. This will consume
+//     /// Size random values to initialize the extension array.
+//     pub fn from_pcg(pcg: PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>) ->
+//         ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> {
+//             let mut pcg = pcg;
+
+//             //Create the starting extension array
+//             let mut ext = Vec::new();
+//             for _ in 0..Size::ext_size() {
+//                 ext.push(pcg.gen());
+//             }
+
+//             ExtPcg {
+//                 pcg : pcg,
+//                 ext : ext,
+//                 _size : PhantomData::<Size>,
+//             }
+//     }
+
+//     /// Create a new unseeded ExtPcg. 
+//     pub fn new_unseeded() -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
+//     {
+//         let pcg = PcgEngine::<Itype, Xtype, StreamMix, MulMix, OutMix>::new_unseeded();
+//         Self::from_pcg(pcg)
+//     }            
+// }
+
+// impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
+//     ExtPcg<Itype, u32, StreamMix, MulMix, OutMix, Size>
+//     where Itype: Clone, 
+//     StreamMix: Stream<Itype>, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, u32>,
+//     Size: ExtSize {
+
+//     #[inline]
+//     fn next_u32(&mut self) -> u32 {
+//         let oldstate = self.pcg.state.clone();
+//         self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
+
+//         let mask = 2usize.pow(Size::ext_bits() as u32)-1;
+//         let pick = self.pcg.state.as_usize() & mask;
+
+//         let ext_val = self.ext[pick];
+//         self.ext[pick] = self.ext[pick] + 1;
+//         OutMix::output(oldstate) ^ ext_val
+//     }
+// }
+
+// impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
+//     ExtPcg<Itype, u64, StreamMix, MulMix, OutMix, Size>
+//     where Itype: Clone, 
+//     StreamMix: Stream<Itype>, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, u64>,
+//     Size: ExtSize {
+
+//     #[inline]
+//     fn next_u32(&mut self) -> u32 {
+//         self.next_u64() as u32
+//     }
+
+//     #[inline]
+//     fn next_u64(&mut self) -> u64 {
+//         let oldstate = self.pcg.state.clone();
+//         self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
+        
+//         let mask = 2usize.pow(Size::ext_bits() as u32)-1;
+//         let pick = self.pcg.state.as_usize() & mask;
+
+//         let ext_val = self.ext[pick];
+//         self.ext[pick] = self.ext[pick] + 1;
+//         OutMix::output(oldstate) ^ ext_val
+//     }
+// }
+
+// pub type SetseqXshRr6432ext<Size> = ExtPcg<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin, Size>;
+// pub type SetseqXshRr12832ext<Size> = ExtPcg<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
+// pub type SetseqXshRr12864ext<Size> = ExtPcg<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
+
+
+// /// The extended version of the Pcg32 generator
+// pub type Pcg32Ext<Size> = SetseqXshRr6432ext<Size>;
+// /// The extended version of the Pcg32L generator
+// pub type Pcg32LExt<Size> = SetseqXshRr12832ext<Size>;
+// /// The extended version of the Pcg64 generator
+// pub type Pcg64Ext<Size> = SetseqXshRr12864ext<Size>;
 
 //
 // Seeding for the ExtPcgs

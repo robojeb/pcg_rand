@@ -119,6 +119,7 @@ pub mod stream;
 pub mod multiplier;
 pub mod outputmix;
 pub mod numops;
+#[macro_use]
 pub mod extension;
     
 use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStream};

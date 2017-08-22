@@ -2,6 +2,7 @@ pcg_rand
 ========
 
 [![Crates.io Version](https://img.shields.io/crates/v/pcg_rand.svg)](https://crates.io/crates/pcg_rand)
+[![](https://docs.rs/pcg_rand/badge.svg)](https://docs.rs/pcg_rand/)
 ![License](https://img.shields.io/crates/l/rustc-serialize.svg)
 
 To use this library add the following to your `Cargo.toml`

@@ -5,7 +5,7 @@ authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 
 homepage = "https://github.com/robojeb/pcg_rand"
 repository = "https://github.com/robojeb/pcg_rand"
-documentation = "https://robojeb.xyz/doc/pcg_rand"
+documentation = "https://docs.rs/pcg_rand/"
 
 license = "Apache-2.0"
 

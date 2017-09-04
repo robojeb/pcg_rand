@@ -86,11 +86,17 @@
 //! You can create a PCG as follows
 //!
 //! ```
+//! extern crate pcg_rand;
+//! extern crate rand;
+//!
+//! use rand::Rng;
 //! use pcg_rand::Pcg32;
+//!
+//! fn main() {
+//!     let mut pcg = Pcg32::new_unseeded();
 //! 
-//! let mut pcg = Pcg32::new_unseeded();
-//! 
-//! let x : u32 = pcg.gen();
+//!     let x : u32 = pcg.gen();
+//! }
 //! ```
 //! 
 //! The extended generators can be built in two ways, either by creating one 

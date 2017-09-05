@@ -353,6 +353,20 @@ impl<Itype, Xtype, MulMix, OutMix> SeedableRng<[Itype;2]> for PcgEngine<Itype, X
     }
 }
 
+impl<Itype, Xtype, MulMix, OutMix> PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix>
+    where Itype: PcgOps + BitSize + Clone,
+    Xtype: PcgOps + BitSize,
+    MulMix: Multiplier<Itype>,
+    OutMix: OutputMixin<Itype, Xtype>,
+    SpecificSeqStream<Itype>: Stream<Itype>,
+    PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> : Rng
+{
+    /// Returns state of PcgEngine in form of a seed.
+    pub fn extract_seed(&self) -> [Itype; 2] {
+        [self.state.clone(), self.stream_mix.get_stream()]
+    }
+}
+
 impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> 
     where 
     StreamMix: Stream<u128>, 

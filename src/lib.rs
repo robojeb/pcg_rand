@@ -112,9 +112,10 @@
 //! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::new_unseeded());
 //! ```
 
+extern crate byteorder;
+extern crate num_traits;
 extern crate rand;
 extern crate rand_core;
-extern crate num_traits;
 
 use rand_core::{RngCore, SeedableRng};
 
@@ -132,6 +133,7 @@ use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 use numops::*;
 use num_traits::Zero;
+use std::mem::size_of;
 
 use std::marker::PhantomData;
 
@@ -161,7 +163,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix,
     pub fn new_unseeded() -> Self {
         PcgEngine {
             state      : Itype::zero(),
-            stream_mix : StreamMix::build(),
+            stream_mix : StreamMix::build(None),
             mul_mix    : PhantomData::<MulMix>,
             out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
@@ -322,17 +324,20 @@ pub type Pcg64Fast = McgXshRs12864;
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
     where 
-    Itype: std::convert::AsMut<[u8]> + std::default::Default,
+    Itype: Sized + seeds::ReadByteOrder,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>
 {
-    type Seed = Itype;
+    //FIXME: This is good enough for u128 (fine for now) but this type needs to 
+    //be able to be dependant on the size of Itype
+    type Seed = [u8; 32];
 
     fn from_seed(seed: Self::Seed) -> Self {
+        let mut seeder = seeds::PCGSeeder::new(&seed);
         PcgEngine{
-            state: seed,
-            stream_mix : StreamMix::build(),
+            state: seeder.get(),
+            stream_mix : StreamMix::build(Some(seeder)),
             mul_mix    : PhantomData::<MulMix>,
             out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
@@ -401,7 +406,7 @@ impl RngCore for Pcg32Basic {
     }
 
     fn next_u64(&mut self) -> u64 {
-        rand_core::impls::next_u64_via_fill(self)
+        rand_core::impls::next_u64_via_u32(self)
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
@@ -418,10 +423,10 @@ impl SeedableRng for Pcg32Basic {
     type Seed=[u8; std::mem::size_of::<u64>()*2];
 
     fn from_seed(seed: Self::Seed) -> Pcg32Basic {
-        let seeder = seeds::PCGSeeder::new(seed);
+        let mut seeder = seeds::PCGSeeder::new(&seed);        
         Pcg32Basic {
-            state : seed[0],
-            inc   : seed[1],
+            state : seeder.get(),
+            inc   : seeder.get(),
         }
     }
 }

@@ -7,7 +7,7 @@ extern crate test;
 
 use pcg_rand::Pcg32Basic;
 use test::Bencher;
-use rand::{Rng, XorShiftRng, SeedableRng};
+use rand::{Rng, XorShiftRng, FromEntropy};
 use rand_core::RngCore;
 
 
@@ -38,7 +38,7 @@ use rand_core::RngCore;
 
 #[bench]
 fn pcg32basic_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg32Basic::from_seed([42, 41]);
+    let mut rng = Pcg32Basic::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -48,7 +48,7 @@ fn pcg32basic_next_u32(b: &mut Bencher) {
 #[bench]
 fn pcg32basic_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1024;
-    let mut rng = Pcg32Basic::from_seed([42,41]);
+    let mut rng = Pcg32Basic::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 
@@ -59,7 +59,7 @@ fn pcg32basic_fill_bytes(b: &mut Bencher) {
 
 #[bench]
 fn xorshift_next_u32(b: &mut Bencher) {
-    let mut rng = XorShiftRng::new_unseeded();
+    let mut rng = XorShiftRng::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -69,7 +69,7 @@ fn xorshift_next_u32(b: &mut Bencher) {
 #[bench]
 fn xorshift_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1024;
-    let mut rng = XorShiftRng::new_unseeded();
+    let mut rng = XorShiftRng::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 

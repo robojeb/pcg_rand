@@ -21,19 +21,24 @@
 extern crate pcg_rand;
 extern crate rand;
 
-use rand::{Rng};
+use rand::{RngCore, Rng, FromEntropy};
 use pcg_rand::{Pcg32Basic}; //Pcg32, Pcg64, Pcg32Unique, Pcg32L};
 
 
 #[cfg(not(test))]
 fn main() {
-    let mut rng = Pcg32Basic::new_unseeded();
+    let mut rng = Pcg32Basic::from_entropy();
 
     // print a bunch of random numbers
-    println!("Here is the generator recovering from a (0,0) initialization: ");
+    println!("Here is the generator seeded from system entropy: ");
     for _ in 0..10 {
         println!("{: ^25}|{: ^25}|{: ^25}", rng.gen::<u32>(), rng.gen::<u32>(), rng.gen::<u32>());
     }
+
+    let mut rng = Pcg32Basic::from_entropy();
+
+    let mut x = vec![0; 1024*1024];
+    rng.fill_bytes(x.as_mut_slice());
 
     // let mut rng : Pcg32 = OsRng::new().unwrap().gen();
     // println!("\nHere is the 32bit generator with random seed and increment: ");

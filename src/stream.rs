@@ -25,12 +25,13 @@
  */
 
 use num_traits::{One, FromPrimitive};
+use seeds::PCGSeeder;
 
 /// A stream provides the increment to the LCG. This increment should be
 /// an odd number or the period of the generator will not be the full size
 /// of the state.
 pub trait Stream<Itype> {
-    fn build() -> Self;
+    fn build<'a>(seed: Option<PCGSeeder<'a, Itype>>) -> Self;
     
     fn set_stream(&mut self, _stream_seq : Itype){
         panic!("Stream setting unimplemented for this stream type");
@@ -49,7 +50,7 @@ pub struct OneSeqStream;
 macro_rules! make_one_seq {
     ( $( $t:ty => $e:expr);* ) => {
 		$(impl Stream<$t> for OneSeqStream {
-            fn build() -> Self {
+            fn build<'a>(_: Option<PCGSeeder<'a, $t>>) -> Self {
                 OneSeqStream
             }
 
@@ -71,12 +72,6 @@ make_one_seq!{
     u128 => 117397592171526113268558934119004209487 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
-// impl Rand for OneSeqStream {
-//     fn rand<R: Rng>(_rng: &mut R) -> Self {
-//         OneSeqStream
-//     }
-// }
-
 /// This stream provides an increment of 0 to the LCG. This turns the
 /// LCG into a MCG, which while being less statistically sound than an LCG,
 /// it is faster.
@@ -85,7 +80,7 @@ pub struct NoSeqStream;
 macro_rules! make_no_seq {
     ( $( $t:ty => $e:expr);* ) => {
 		$(impl Stream<$t> for NoSeqStream {
-            fn build() -> Self {
+            fn build<'a>(_: Option<PCGSeeder<'a, $t>>) -> Self {
                 NoSeqStream
             }
 
@@ -107,11 +102,6 @@ make_no_seq!{
     u128 => 0
 }
 
-// impl Rand for NoSeqStream {
-//     fn rand<R: Rng>(_rng: &mut R) -> Self {
-//         NoSeqStream
-//     }
-// }
 
 /// By default this stream provides the same stream as OneSeqStream. The
 /// advantage to this stream is it can be changed at runtime. This incurs an
@@ -123,10 +113,16 @@ pub struct SpecificSeqStream<Itype> {
 macro_rules! make_set_seq {
     ( $( $t:ident => $e:expr);* ) => {
         $(impl Stream<$t> for SpecificSeqStream<$t> {
-            fn build() -> Self {
-                SpecificSeqStream {
-                    inc : $e,
+            fn build<'a>(seed: Option<PCGSeeder<'a, $t>>) -> Self {
+                match seed {
+                    None => SpecificSeqStream {
+                                inc : $e,
+                            },
+                    Some(mut seed) => SpecificSeqStream {
+                        inc: seed.get(),
+                    },
                 }
+                
             }
 
             fn set_stream(&mut self, stream_seq : $t) {
@@ -151,17 +147,6 @@ make_set_seq!{
     u128 => 117397592171526113268558934119004209487 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
-// impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> 
-//     where 
-//     Itype: Rand + BitOr<Itype, Output=Itype> + One
-// {
-//     fn rand<R: Rng>(rng: &mut R) -> Self {
-//         SpecificSeqStream {
-//             inc : rng.gen::<Itype>() | Itype::one(),
-//         }
-//     }
-// }
-
 /// This stream provides a stream based on the current location of the 
 /// generator in memory. This means that two PCG with the same seed 
 /// can produce different sequences of numbers. Though if the generator is
@@ -170,8 +155,9 @@ pub struct UniqueSeqStream;
 
 impl<Itype> Stream<Itype> for UniqueSeqStream 
     where 
-    Itype: FromPrimitive {
-    fn build() -> Self {
+    Itype: FromPrimitive + ::seeds::ReadByteOrder {
+
+    fn build<'a>(_: Option<PCGSeeder<'a, Itype>>) -> Self {
         UniqueSeqStream
     }
     
@@ -184,9 +170,3 @@ impl<Itype> Stream<Itype> for UniqueSeqStream
         Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
     }
 }
-
-// impl Rand for UniqueSeqStream {
-//     fn rand<R: Rng>(_rng: &mut R) -> Self {
-//         UniqueSeqStream
-//     }
-// }

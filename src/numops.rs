@@ -49,6 +49,7 @@ macro_rules! basic_ops {
         }
 
         impl AsUsize for $t {
+            #[inline]
             fn as_usize(&self) -> usize {
                 *self as usize
             }
@@ -82,6 +83,7 @@ macro_rules! smaller {
     ( $( $t:ty, $other:ty);*) => {
         $(
             impl AsSmaller<$other> for $t {
+                #[inline]
                 fn shrink(self) -> $other {
                     self as $other
                 }

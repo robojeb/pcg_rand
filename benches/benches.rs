@@ -2,11 +2,13 @@
 
 extern crate pcg_rand;
 extern crate rand;
+extern crate rand_core;
 extern crate test;
 
 use pcg_rand::Pcg32Basic;
 use test::Bencher;
 use rand::{Rng, XorShiftRng, SeedableRng};
+use rand_core::RngCore;
 
 
 // #[bench]

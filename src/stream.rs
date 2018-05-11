@@ -24,10 +24,7 @@
  *     http://www.pcg-random.org
  */
 
-use ::numops::PcgOps;
-use rand::{Rng, Rand};
 use num_traits::{One, FromPrimitive};
-use std::ops::BitOr;
 
 /// A stream provides the increment to the LCG. This increment should be
 /// an odd number or the period of the generator will not be the full size
@@ -74,11 +71,11 @@ make_one_seq!{
     u128 => 117397592171526113268558934119004209487 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
-impl Rand for OneSeqStream {
-    fn rand<R: Rng>(_rng: &mut R) -> Self {
-        OneSeqStream
-    }
-}
+// impl Rand for OneSeqStream {
+//     fn rand<R: Rng>(_rng: &mut R) -> Self {
+//         OneSeqStream
+//     }
+// }
 
 /// This stream provides an increment of 0 to the LCG. This turns the
 /// LCG into a MCG, which while being less statistically sound than an LCG,
@@ -110,11 +107,11 @@ make_no_seq!{
     u128 => 0
 }
 
-impl Rand for NoSeqStream {
-    fn rand<R: Rng>(_rng: &mut R) -> Self {
-        NoSeqStream
-    }
-}
+// impl Rand for NoSeqStream {
+//     fn rand<R: Rng>(_rng: &mut R) -> Self {
+//         NoSeqStream
+//     }
+// }
 
 /// By default this stream provides the same stream as OneSeqStream. The
 /// advantage to this stream is it can be changed at runtime. This incurs an
@@ -154,16 +151,16 @@ make_set_seq!{
     u128 => 117397592171526113268558934119004209487 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
-impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> 
-    where 
-    Itype: Rand + BitOr<Itype, Output=Itype> + One
-{
-    fn rand<R: Rng>(rng: &mut R) -> Self {
-        SpecificSeqStream {
-            inc : rng.gen::<Itype>() | Itype::one(),
-        }
-    }
-}
+// impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> 
+//     where 
+//     Itype: Rand + BitOr<Itype, Output=Itype> + One
+// {
+//     fn rand<R: Rng>(rng: &mut R) -> Self {
+//         SpecificSeqStream {
+//             inc : rng.gen::<Itype>() | Itype::one(),
+//         }
+//     }
+// }
 
 /// This stream provides a stream based on the current location of the 
 /// generator in memory. This means that two PCG with the same seed 
@@ -188,8 +185,8 @@ impl<Itype> Stream<Itype> for UniqueSeqStream
     }
 }
 
-impl Rand for UniqueSeqStream {
-    fn rand<R: Rng>(_rng: &mut R) -> Self {
-        UniqueSeqStream
-    }
-}
+// impl Rand for UniqueSeqStream {
+//     fn rand<R: Rng>(_rng: &mut R) -> Self {
+//         UniqueSeqStream
+//     }
+// }

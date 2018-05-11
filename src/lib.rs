@@ -112,11 +112,11 @@
 //! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::new_unseeded());
 //! ```
 
-
 extern crate rand;
+extern crate rand_core;
 extern crate num_traits;
 
-use rand::{Rng, Rand, SeedableRng};
+use rand_core::{RngCore, SeedableRng};
 
 use std::num::Wrapping;
 
@@ -125,6 +125,7 @@ pub mod multiplier;
 pub mod outputmix;
 pub mod numops;
 pub mod extension;
+pub mod seeds;
     
 use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStream};
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
@@ -169,61 +170,78 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix,
 }
 
 //Provide random for 32 bit generators
-impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u32, StreamMix, MulMix, OutMix>
+impl<Itype, StreamMix, MulMix, OutMix> RngCore for PcgEngine<Itype, u32, StreamMix, MulMix, OutMix>
     where 
     Itype: PcgOps + Clone,  
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, u32> {
 
-    #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = self.state.clone();
         self.state = self.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
         
         OutMix::output(oldstate)
     }
+
+    fn next_u64(&mut self) -> u64 {
+        rand_core::impls::next_u64_via_u32(self)
+    }
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        rand_core::impls::fill_bytes_via_next(self, dest)
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
+        Ok(self.fill_bytes(dest))
+    }
 }
 
 //Provide random for 64 bit generators
-impl<Itype, StreamMix, MulMix, OutMix> Rng for PcgEngine<Itype, u64, StreamMix, MulMix, OutMix>
+impl<Itype, StreamMix, MulMix, OutMix> RngCore for PcgEngine<Itype, u64, StreamMix, MulMix, OutMix>
     where 
     Itype: PcgOps + Clone,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, u64> {
 
-    #[inline]
     fn next_u32(&mut self) -> u32 {
         self.next_u64() as u32
     }
 
-    #[inline]
     fn next_u64(&mut self) -> u64 {
         let oldstate = self.state.clone();
         self.state = self.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
         
         OutMix::output(oldstate)
     }
-}
 
-impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
-    where 
-    Itype: Rand, 
-    StreamMix: Stream<Itype> + Rand, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>
-{
-    fn rand<R: Rng>(rng: &mut R) -> Self {
-        PcgEngine{
-            state: rng.gen(),
-            stream_mix : rng.gen(),
-            mul_mix    : PhantomData::<MulMix>,
-            out_mix    : PhantomData::<OutMix>,
-            phantom    : PhantomData::<Xtype>,
-        }
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        rand_core::impls::fill_bytes_via_next(self, dest)
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
+        Ok(self.fill_bytes(dest))
     }
 }
+
+// impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
+//     where 
+//     Itype: Rand, 
+//     StreamMix: Stream<Itype> + Rand, 
+//     MulMix: Multiplier<Itype>, 
+//     OutMix: OutputMixin<Itype, Xtype>
+// {
+//     fn rand<R: Rng>(rng: &mut R) -> Self {
+//         PcgEngine{
+//             state: rng.gen(),
+//             stream_mix : rng.gen(),
+//             mul_mix    : PhantomData::<MulMix>,
+//             out_mix    : PhantomData::<OutMix>,
+//             phantom    : PhantomData::<Xtype>,
+//         }
+//     }
+// }
 
 pub type OneseqXshRs6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type OneseqXshRr6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
@@ -302,18 +320,16 @@ pub type Pcg64Fast = McgXshRs12864;
 // Seeding for all of the different RNG types
 //
 
-impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng<Itype> for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
+impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
     where 
+    Itype: std::convert::AsMut<[u8]> + std::default::Default,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : Rng
+    OutMix: OutputMixin<Itype, Xtype>
 {
-    fn reseed(&mut self, seed: Itype) {
-        self.state = seed;
-    }
-    
-    fn from_seed(seed: Itype) -> Self {
+    type Seed = Itype;
+
+    fn from_seed(seed: Self::Seed) -> Self {
         PcgEngine{
             state: seed,
             stream_mix : StreamMix::build(),
@@ -324,31 +340,27 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng<Itype> for PcgEngine<I
     }
 }
 
-impl<Itype, Xtype, MulMix, OutMix> SeedableRng<[Itype;2]> for PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> 
-    where 
-    Itype: Clone,
-    MulMix: Multiplier<Itype>,
-    OutMix: OutputMixin<Itype, Xtype>,
-    SpecificSeqStream<Itype>: Stream<Itype>,
-    PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> : Rng
-{
-    fn reseed(&mut self, seed: [Itype;2]) {
-        self.state = seed[0].clone();
-        self.stream_mix.set_stream(seed[1].clone());
-    }
-    
-    fn from_seed(seed: [Itype;2]) -> Self {
-        let mut stream = SpecificSeqStream::build();
-        stream.set_stream(seed[1].clone());
-        PcgEngine{
-            state: seed[0].clone(),
-            stream_mix : stream,
-            mul_mix    : PhantomData::<MulMix>,
-            out_mix    : PhantomData::<OutMix>,
-            phantom    : PhantomData::<Xtype>,
-        }
-    }
-}
+// impl<Itype, Xtype, MulMix, OutMix> SeedableRng for PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> 
+//     where 
+//     Itype: Clone,
+//     MulMix: Multiplier<Itype>,
+//     OutMix: OutputMixin<Itype, Xtype>,
+//     SpecificSeqStream<Itype>: Stream<Itype>
+// {
+//     type Seed = [Itype;2];
+
+//     fn from_seed(seed: Self::Seed) -> Self {
+//         let mut stream = SpecificSeqStream::build();
+//         stream.set_stream(seed[1].clone());
+//         PcgEngine{
+//             state: seed[0].clone(),
+//             stream_mix : stream,
+//             mul_mix    : PhantomData::<MulMix>,
+//             out_mix    : PhantomData::<OutMix>,
+//             phantom    : PhantomData::<Xtype>,
+//         }
+//     }
+// }
 
 /*
  * The simple C minimal implementation of PCG32
@@ -374,8 +386,7 @@ impl Pcg32Basic {
 }
 
 //Pcg32Basic is an rng
-impl Rng for Pcg32Basic {
-    #[inline]
+impl RngCore for Pcg32Basic {
     fn next_u32(&mut self) -> u32 {
         let oldstate = Wrapping(self.state);
         //Update the state as an lcg
@@ -388,29 +399,29 @@ impl Rng for Pcg32Basic {
         //Produce the permuted output
         (xorshifted >> rot) | (xorshifted << ((-(rot as i32)) & 31))
     }
+
+    fn next_u64(&mut self) -> u64 {
+        rand_core::impls::next_u64_via_fill(self)
+    }
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        rand_core::impls::fill_bytes_via_next(self, dest)
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
+        Ok(self.fill_bytes(dest))
+    }
 }
 
 //Allow seeding of Pcg32Basic
-impl SeedableRng<[u64; 2]> for Pcg32Basic {
-    fn reseed(&mut self, seed: [u64; 2]) {
-        self.state = seed[0];
-        self.inc   = seed[1];
-    }
+impl SeedableRng for Pcg32Basic {
+    type Seed=[u8; std::mem::size_of::<u64>()*2];
 
-    fn from_seed(seed: [u64; 2]) -> Pcg32Basic {
+    fn from_seed(seed: Self::Seed) -> Pcg32Basic {
+        let seeder = seeds::PCGSeeder::new(seed);
         Pcg32Basic {
             state : seed[0],
             inc   : seed[1],
-        }
-    }
-}
-
-//Pcg32Basic can be randomly initialized with system entropy (or any other RNG)
-impl Rand for Pcg32Basic {
-    fn rand<R: Rng>(other: &mut R) -> Pcg32Basic {
-        Pcg32Basic{
-            state : other.gen(),
-            inc   : other.gen(),
         }
     }
 }

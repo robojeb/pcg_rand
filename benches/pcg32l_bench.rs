@@ -6,11 +6,11 @@ extern crate test;
 
 use pcg_rand::{Pcg32L, Pcg32LFast};
 use test::Bencher;
-use rand::{Rng,SeedableRng};
+use rand::{Rng, RngCore, FromEntropy};
 
 #[bench]
 fn pcg32l_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg32L::new_unseeded();
+    let mut rng = Pcg32L::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -20,7 +20,7 @@ fn pcg32l_next_u32(b: &mut Bencher) {
 #[bench]
 fn pcg32l_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1024;
-    let mut rng = Pcg32L::new_unseeded();
+    let mut rng = Pcg32L::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 
@@ -31,7 +31,7 @@ fn pcg32l_fill_bytes(b: &mut Bencher) {
 
 #[bench]
 fn pcg32lfast_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg32LFast::new_unseeded();
+    let mut rng = Pcg32LFast::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -41,7 +41,7 @@ fn pcg32lfast_next_u32(b: &mut Bencher) {
 #[bench]
 fn pcg32lfast_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1024;
-    let mut rng = Pcg32LFast::new_unseeded();
+    let mut rng = Pcg32LFast::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 

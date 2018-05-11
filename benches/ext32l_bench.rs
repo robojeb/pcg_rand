@@ -4,14 +4,14 @@ extern crate pcg_rand;
 extern crate rand;
 extern crate test;
 
-use pcg_rand::extension::Pcg64Ext;
+use pcg_rand::extension::Pcg32LExt;
 use pcg_rand::extension::extsizes::*;
-use rand::Rng;
+use rand::{Rng, RngCore, FromEntropy};
 use test::Bencher;
 
 #[bench]
-fn pcg64ext2_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg64Ext::<Ext2>::new_unseeded();
+fn pcg32lext2_next_u32(b: &mut Bencher) {
+    let mut rng = Pcg32LExt::<Ext2>::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -19,9 +19,9 @@ fn pcg64ext2_next_u32(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext2_fill_bytes(b: &mut Bencher) {
+fn pcg32lext2_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1025;
-    let mut rng = Pcg64Ext::<Ext2>::new_unseeded();
+    let mut rng = Pcg32LExt::<Ext2>::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 
@@ -31,8 +31,8 @@ fn pcg64ext2_fill_bytes(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext16_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg64Ext::<Ext16>::new_unseeded();
+fn pcg32lext16_next_u32(b: &mut Bencher) {
+    let mut rng = Pcg32LExt::<Ext16>::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -40,9 +40,9 @@ fn pcg64ext16_next_u32(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext16_fill_bytes(b: &mut Bencher) {
+fn pcg32lext16_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1025;
-    let mut rng = Pcg64Ext::<Ext16>::new_unseeded();
+    let mut rng = Pcg32LExt::<Ext16>::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 
@@ -52,8 +52,8 @@ fn pcg64ext16_fill_bytes(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext32_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg64Ext::<Ext32>::new_unseeded();
+fn pcg32lext32_next_u32(b: &mut Bencher) {
+    let mut rng = Pcg32LExt::<Ext32>::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -61,9 +61,9 @@ fn pcg64ext32_next_u32(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext32_fill_bytes(b: &mut Bencher) {
+fn pcg32lext32_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1025;
-    let mut rng = Pcg64Ext::<Ext32>::new_unseeded();
+    let mut rng = Pcg32LExt::<Ext32>::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 
@@ -73,8 +73,8 @@ fn pcg64ext32_fill_bytes(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext1024_next_u32(b: &mut Bencher) {
-    let mut rng = Pcg64Ext::<Ext1024>::new_unseeded();
+fn pcg32lext1024_next_u32(b: &mut Bencher) {
+    let mut rng = Pcg32LExt::<Ext1024>::from_entropy();
 
     b.iter(|| {
         rng.next_u32()
@@ -82,9 +82,9 @@ fn pcg64ext1024_next_u32(b: &mut Bencher) {
 }
 
 #[bench]
-fn pcg64ext1024_fill_bytes(b: &mut Bencher) {
+fn pcg32lext1024_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024*1025;
-    let mut rng = Pcg64Ext::<Ext1024>::new_unseeded();
+    let mut rng = Pcg32LExt::<Ext1024>::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 

@@ -123,7 +123,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
     }
 
     fn next_u64(&mut self) -> u64 {
-        ::rand_core::impls::next_u64_via_fill(self)
+        ::rand_core::impls::next_u64_via_u32(self)
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
@@ -186,18 +186,21 @@ pub type Pcg64Ext<Size> = SetseqXshRr12864ext<Size>;
 //These generics get pretty insane
 impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng for ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
     where 
-    Itype: Zero + AsMut<[u8]> + Default,
+    Itype: ::seeds::ReadByteOrder + Default + Zero,
     Xtype: PcgOps + BitSize, 
     Standard: Distribution<Xtype>,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>,
     Size: ExtSize, ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> : RngCore,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : RngCore + SeedableRng<Seed=Itype>
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : RngCore + SeedableRng<Seed=[u8; 32]>
     
 {   
-    type Seed = Itype;
-    fn from_seed(seed: Itype) -> Self {
+    //FIXME: This is good enough for u128 (fine for now) but this type needs to 
+    //be able to be dependant on the size of Itype
+    type Seed = [u8; 32];
+
+    fn from_seed(seed: Self::Seed) -> Self {
         let pcg = PcgEngine::from_seed(seed);
         ExtPcg::from_pcg(pcg)
     }

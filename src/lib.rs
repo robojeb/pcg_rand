@@ -133,7 +133,6 @@ use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 use numops::*;
 use num_traits::Zero;
-use std::mem::size_of;
 
 use std::marker::PhantomData;
 
@@ -227,23 +226,6 @@ impl<Itype, StreamMix, MulMix, OutMix> RngCore for PcgEngine<Itype, u64, StreamM
     }
 }
 
-// impl<Itype, Xtype, StreamMix, MulMix, OutMix> Rand for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
-//     where 
-//     Itype: Rand, 
-//     StreamMix: Stream<Itype> + Rand, 
-//     MulMix: Multiplier<Itype>, 
-//     OutMix: OutputMixin<Itype, Xtype>
-// {
-//     fn rand<R: Rng>(rng: &mut R) -> Self {
-//         PcgEngine{
-//             state: rng.gen(),
-//             stream_mix : rng.gen(),
-//             mul_mix    : PhantomData::<MulMix>,
-//             out_mix    : PhantomData::<OutMix>,
-//             phantom    : PhantomData::<Xtype>,
-//         }
-//     }
-// }
 
 pub type OneseqXshRs6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type OneseqXshRr6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;

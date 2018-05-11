@@ -132,7 +132,8 @@ use stream::{Stream, OneSeqStream, NoSeqStream, SpecificSeqStream, UniqueSeqStre
 use multiplier::{Multiplier, DefaultMultiplier, McgMultiplier};
 use outputmix::{OutputMixin, XshRsMixin, XshRrMixin};
 use numops::*;
-use num_traits::Zero;
+use num_traits::{Zero, One};
+use seeds::PcgSeeder;
 
 use std::marker::PhantomData;
 
@@ -306,48 +307,23 @@ pub type Pcg64Fast = McgXshRs12864;
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng for PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> 
     where 
-    Itype: Sized + seeds::ReadByteOrder,
+    Itype: Sized + seeds::ReadByteOrder + Zero + One,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>
 {
-    //FIXME: This is good enough for u128 (fine for now) but this type needs to 
-    //be able to be dependant on the size of Itype
-    type Seed = [u8; 32];
+    type Seed = PcgSeeder<Itype>;
 
-    fn from_seed(seed: Self::Seed) -> Self {
-        let mut seeder = seeds::PCGSeeder::new(&seed);
+    fn from_seed(mut seed: Self::Seed) -> Self {
         PcgEngine{
-            state: seeder.get(),
-            stream_mix : StreamMix::build(Some(seeder)),
+            state: seed.get(),
+            stream_mix : StreamMix::build(Some(&mut seed)),
             mul_mix    : PhantomData::<MulMix>,
             out_mix    : PhantomData::<OutMix>,
             phantom    : PhantomData::<Xtype>,
         }
     }
 }
-
-// impl<Itype, Xtype, MulMix, OutMix> SeedableRng for PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix> 
-//     where 
-//     Itype: Clone,
-//     MulMix: Multiplier<Itype>,
-//     OutMix: OutputMixin<Itype, Xtype>,
-//     SpecificSeqStream<Itype>: Stream<Itype>
-// {
-//     type Seed = [Itype;2];
-
-//     fn from_seed(seed: Self::Seed) -> Self {
-//         let mut stream = SpecificSeqStream::build();
-//         stream.set_stream(seed[1].clone());
-//         PcgEngine{
-//             state: seed[0].clone(),
-//             stream_mix : stream,
-//             mul_mix    : PhantomData::<MulMix>,
-//             out_mix    : PhantomData::<OutMix>,
-//             phantom    : PhantomData::<Xtype>,
-//         }
-//     }
-// }
 
 /*
  * The simple C minimal implementation of PCG32
@@ -365,10 +341,7 @@ pub struct Pcg32Basic {
 
 impl Pcg32Basic {
     pub fn new_unseeded() -> Pcg32Basic {
-        Pcg32Basic{
-            state : 0,
-            inc : 1,
-        }
+        Pcg32Basic::from_seed(Default::default())
     }
 }
 
@@ -402,13 +375,12 @@ impl RngCore for Pcg32Basic {
 
 //Allow seeding of Pcg32Basic
 impl SeedableRng for Pcg32Basic {
-    type Seed=[u8; std::mem::size_of::<u64>()*2];
+    type Seed=PcgSeeder<u64>;
 
-    fn from_seed(seed: Self::Seed) -> Pcg32Basic {
-        let mut seeder = seeds::PCGSeeder::new(&seed);        
+    fn from_seed(mut seed: Self::Seed) -> Pcg32Basic {
         Pcg32Basic {
-            state : seeder.get(),
-            inc   : seeder.get(),
+            state : seed.get(),
+            inc   : seed.get(),
         }
     }
 }

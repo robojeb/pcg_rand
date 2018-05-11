@@ -5,36 +5,11 @@ extern crate rand;
 extern crate rand_core;
 extern crate test;
 
-use pcg_rand::Pcg32Basic;
+use pcg_rand::{Pcg32Basic, Pcg64Basic};
 use test::Bencher;
 use rand::{Rng, XorShiftRng, FromEntropy};
 use rand_core::RngCore;
 
-
-// #[bench]
-// fn u128_mul(b: &mut Bencher) {
-//    let mut a = 424275113695319687226; //u128::from_parts(23,58);
-//    let c = 811656739243220271189; //u128::from_parts(44,85);
-
-//    b.iter(|| {
-//        a = a.wrapping_mul(c);
-//    })
-// }
-
-// #[bench]
-// fn u128_shr(b: &mut Bencher) {
-//     let mut a = 5327757042542938509869243436; //u128::from_parts(288818288,2888490028);
-
-//     b.iter(|| { a = a.wrapping_shr(16)});
-// }
-
-// #[bench]
-// fn u128_add(b: &mut Bencher) {
-//     let mut x = 5327757042542938509869243436; // NOT: u128::from_parts(188281919932,18848482929);
-//     let y = 5327757042542938509869243436; // NOT: u128::from_parts(882327887118,848898198399);
-
-//     b.iter(||{x = x.wrapping_add(y)});
-// }
 
 #[bench]
 fn pcg32basic_next_u32(b: &mut Bencher) {

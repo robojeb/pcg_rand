@@ -25,13 +25,13 @@
  */
 
 use num_traits::{One, FromPrimitive};
-use seeds::PCGSeeder;
+use seeds::PcgSeeder;
 
 /// A stream provides the increment to the LCG. This increment should be
 /// an odd number or the period of the generator will not be the full size
 /// of the state.
 pub trait Stream<Itype> {
-    fn build<'a>(seed: Option<PCGSeeder<'a, Itype>>) -> Self;
+    fn build(seed: Option<&mut PcgSeeder<Itype>>) -> Self;
     
     fn set_stream(&mut self, _stream_seq : Itype){
         panic!("Stream setting unimplemented for this stream type");
@@ -50,7 +50,7 @@ pub struct OneSeqStream;
 macro_rules! make_one_seq {
     ( $( $t:ty => $e:expr);* ) => {
 		$(impl Stream<$t> for OneSeqStream {
-            fn build<'a>(_: Option<PCGSeeder<'a, $t>>) -> Self {
+            fn build(_: Option<&mut PcgSeeder<$t>>) -> Self {
                 OneSeqStream
             }
 
@@ -80,7 +80,7 @@ pub struct NoSeqStream;
 macro_rules! make_no_seq {
     ( $( $t:ty => $e:expr);* ) => {
 		$(impl Stream<$t> for NoSeqStream {
-            fn build<'a>(_: Option<PCGSeeder<'a, $t>>) -> Self {
+            fn build(_: Option<&mut PcgSeeder<$t>>) -> Self {
                 NoSeqStream
             }
 
@@ -113,12 +113,12 @@ pub struct SpecificSeqStream<Itype> {
 macro_rules! make_set_seq {
     ( $( $t:ident => $e:expr);* ) => {
         $(impl Stream<$t> for SpecificSeqStream<$t> {
-            fn build<'a>(seed: Option<PCGSeeder<'a, $t>>) -> Self {
+            fn build(seed: Option<&mut PcgSeeder<$t>>) -> Self {
                 match seed {
                     None => SpecificSeqStream {
                                 inc : $e,
                             },
-                    Some(mut seed) => SpecificSeqStream {
+                    Some(seed) => SpecificSeqStream {
                         inc: seed.get(),
                     },
                 }
@@ -157,7 +157,7 @@ impl<Itype> Stream<Itype> for UniqueSeqStream
     where 
     Itype: FromPrimitive + ::seeds::ReadByteOrder {
 
-    fn build<'a>(_: Option<PCGSeeder<'a, Itype>>) -> Self {
+    fn build(_: Option<&mut PcgSeeder<Itype>>) -> Self {
         UniqueSeqStream
     }
     

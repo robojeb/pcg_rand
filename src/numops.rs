@@ -16,8 +16,6 @@
  * limitations under the License.
  *
  */
- 
-use extprim::u128::u128;
 
 /// The types of numaric options that PCG needs to operate. 
 /// Some day this will be replaced with Num-traits when they support
@@ -35,7 +33,7 @@ pub trait AsUsize {
 
 /// A trait that determines how many bits are in a type. 
 pub trait BitSize {
-    fn bits() -> usize;
+    const BITS: usize;
 }
 
 /// Allows a type to become a type of a smaller value.
@@ -47,10 +45,7 @@ pub trait AsSmaller<T> {
 macro_rules! basic_ops {
     ( $( $t:ty, $bits:expr);*) => {
         $(impl BitSize for $t {
-            #[inline]
-            fn bits() -> usize {
-                $bits
-            }
+            const BITS: usize = $bits;
         }
 
         impl AsUsize for $t {
@@ -79,7 +74,8 @@ basic_ops!(
     u8, 8;
     u16, 16;
     u32, 32;
-    u64, 64
+    u64, 64;
+    u128, 128
 );
 
 macro_rules! smaller {
@@ -95,6 +91,10 @@ macro_rules! smaller {
 }
 
 smaller!(
+    u128, u64;
+    u128, u32;
+    u128, u16;
+    u128, u8;
     u64, u32;
     u64, u16;
     u64, u8;
@@ -103,40 +103,14 @@ smaller!(
     u16, u8
 );
 
-impl AsSmaller<u64> for u128 {
-    fn shrink(self) -> u64 {
-        //Truncate the number
-        self.low64()
-    }
-}
-
-impl AsSmaller<u32> for u128 {
-    fn shrink(self) -> u32 {
-        //Truncate the number
-        self.low64() as u32
-    }
-}
-
-impl BitSize for u128 {
-    fn bits() -> usize {
-        128
-    }
-}
-
-impl AsUsize for u128 {
-    fn as_usize(&self) -> usize {
-        self.low64() as usize
-    }
-}
-
-impl PcgOps for u128 {
-    #[inline]
-    fn wrap_mul(&self, rhs : u128) -> u128 {
-        self.wrapping_mul(rhs) 
-    }
+// impl PcgOps for u128 {
+//     #[inline]
+//     fn wrap_mul(&self, rhs : u128) -> u128 {
+//         self.wrapping_mul(rhs) 
+//     }
     
-    #[inline]
-    fn wrap_add(&self, rhs : u128) -> u128 {
-        self.wrapping_add(rhs)
-    }
-}
+//     #[inline]
+//     fn wrap_add(&self, rhs : u128) -> u128 {
+//         self.wrapping_add(rhs)
+//     }
+// }

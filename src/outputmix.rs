@@ -46,7 +46,7 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
     #[inline(always)]
     fn output(state : Itype) -> Xtype {
         let mut state = state;
-        let sparebits = Itype::bits() - Xtype::bits();
+        let sparebits = Itype::BITS - Xtype::BITS;
         
         let opbits : usize = if sparebits - 5 >= 64 { 5 } else
                         if sparebits - 4 >= 32 { 4 } else
@@ -57,10 +57,10 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
         let maxrandshift = mask;
         let topspare = opbits;
         let bottomspare = sparebits - topspare;
-        let xshift = topspare + (Xtype::bits()+maxrandshift)/2;
+        let xshift = topspare + (Xtype::BITS+maxrandshift)/2;
         
         let rshift = if opbits != 0 {
-            (state >> (Itype::bits() - opbits)).as_usize() & mask
+            (state >> (Itype::BITS - opbits)).as_usize() & mask
         } else {
             0
         };
@@ -81,8 +81,8 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin
     fn output(state : Itype) -> Xtype {
         let mut state = state;
         
-        let sparebits = Itype::bits() - Xtype::bits();
-        let xtypebits = Xtype::bits();
+        let sparebits = Itype::BITS - Xtype::BITS;
+        let xtypebits = Xtype::BITS;
         let wantedopbits : usize = if xtypebits >= 128 { 7 } else 
                             if xtypebits >= 64 { 6 } else 
                             if xtypebits >= 32 { 5 } else
@@ -101,7 +101,7 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin
         let xshift = (topspare + xtypebits)/2;
         
         let rot = if opbits != 0 {
-            (state >> (Itype::bits() - opbits)).as_usize() & mask
+            (state >> (Itype::BITS - opbits)).as_usize() & mask
         } else { 0 };
 
         let amprot = (rot << amplifier) & mask;

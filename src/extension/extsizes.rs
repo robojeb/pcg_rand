@@ -40,10 +40,8 @@
 /// Bigger extensions can be produced and dropped as long as they are powers of
 /// 2
 pub trait ExtSize {
-    ///The size of the extension
-    fn ext_size() -> usize;
-    ///the log_2() of the size of the extension.
-    fn ext_bits() -> usize;
+    const EXT_SIZE: usize;
+    const EXT_BITS: u32;
 }
 
 macro_rules! make_ext_size {
@@ -51,13 +49,8 @@ macro_rules! make_ext_size {
         $(pub struct $i;
 
         impl ExtSize for $i {
-            fn ext_size() -> usize {
-                $size
-            }
-
-            fn ext_bits() -> usize {
-                $bits
-            }
+            const EXT_SIZE: usize = $size;
+            const EXT_BITS: u32 = $bits;
         })*
     }
 }

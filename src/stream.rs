@@ -26,7 +26,6 @@
 
 use ::numops::PcgOps;
 use rand::{Rng, Rand};
-use extprim::u128::u128;
 use num_traits::{One, FromPrimitive};
 use std::ops::BitOr;
 
@@ -72,7 +71,7 @@ macro_rules! make_one_seq {
 make_one_seq!{
     u32  => 2891336453u32;
     u64  => 1442695040888963407u64;
-    u128 => u128::from_parts(6364136223846793005,1442695040888963407)
+    u128 => 117397592171526113268558934119004209487 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
 impl Rand for OneSeqStream {
@@ -108,7 +107,7 @@ macro_rules! make_no_seq {
 make_no_seq!{
     u32  => 0;
     u64  => 0;
-    u128 => u128::zero()
+    u128 => 0
 }
 
 impl Rand for NoSeqStream {
@@ -152,7 +151,7 @@ macro_rules! make_set_seq {
 make_set_seq!{
     u32 => 2891336453u32;
     u64 => 1442695040888963407u64;
-    u128 => u128::from_parts(6364136223846793005,1442695040888963407)
+    u128 => 117397592171526113268558934119004209487 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
 impl<Itype: Rand + PcgOps> Rand for SpecificSeqStream<Itype> 

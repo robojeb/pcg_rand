@@ -114,14 +114,11 @@
 
 
 extern crate rand;
-extern crate extprim;
 extern crate num_traits;
 
 use rand::{Rng, Rand, SeedableRng};
 
 use std::num::Wrapping;
-
-use extprim::u128::u128;
 
 pub mod stream;
 pub mod multiplier;
@@ -345,52 +342,6 @@ impl<Itype, Xtype, MulMix, OutMix> SeedableRng<[Itype;2]> for PcgEngine<Itype, X
         stream.set_stream(seed[1].clone());
         PcgEngine{
             state: seed[0].clone(),
-            stream_mix : stream,
-            mul_mix    : PhantomData::<MulMix>,
-            out_mix    : PhantomData::<OutMix>,
-            phantom    : PhantomData::<Xtype>,
-        }
-    }
-}
-
-impl<Xtype, StreamMix, MulMix, OutMix> SeedableRng<[u64;2]> for PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> 
-    where 
-    StreamMix: Stream<u128>, 
-    MulMix: Multiplier<u128>, 
-    OutMix: OutputMixin<u128, Xtype>,
-    PcgEngine<u128, Xtype, StreamMix, MulMix, OutMix> : Rng
-{
-    fn reseed(&mut self, seed: [u64;2]) {
-        self.state = u128::from_parts(seed[0], seed[1]);
-    }
-    
-    fn from_seed(seed: [u64;2]) -> Self {
-        PcgEngine{
-            state: u128::from_parts(seed[0], seed[1]),
-            stream_mix : StreamMix::build(),
-            mul_mix    : PhantomData::<MulMix>,
-            out_mix    : PhantomData::<OutMix>,
-            phantom    : PhantomData::<Xtype>,
-        }
-    }
-}
-
-impl<Xtype, MulMix, OutMix> SeedableRng<[u64;4]> for PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> 
-    where 
-    MulMix: Multiplier<u128>, 
-    OutMix: OutputMixin<u128, Xtype>,
-    PcgEngine<u128, Xtype, SpecificSeqStream<u128>, MulMix, OutMix> : Rng
-{
-    fn reseed(&mut self, seed: [u64;4]) {
-        self.state = u128::from_parts(seed[0], seed[1]);
-        self.stream_mix.set_stream(u128::from_parts(seed[2], seed[3]));
-    }
-    
-    fn from_seed(seed: [u64;4]) -> Self {
-        let mut stream = SpecificSeqStream::build();
-        stream.set_stream(u128::from_parts(seed[2], seed[3]));
-        PcgEngine{
-            state: u128::from_parts(seed[0], seed[1]),
             stream_mix : stream,
             mul_mix    : PhantomData::<MulMix>,
             out_mix    : PhantomData::<OutMix>,

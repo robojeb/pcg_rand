@@ -37,7 +37,6 @@ pub mod extsizes;
 
 pub use self::extsizes::*;
 
-use extprim::u128::u128;
 use rand::{Rng, Rand, SeedableRng};
 use std::marker::PhantomData;
 use super::PcgEngine;
@@ -54,7 +53,7 @@ pub struct ExtPcg<Itype, Xtype,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>, 
-    Size: ExtSize> 
+    Size: ExtSize>
 {
     pcg : PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>,
     ext : Vec<Xtype>,
@@ -80,8 +79,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
             let mut pcg = pcg;
 
             //Create the starting extension array
-            let mut ext = Vec::new();
-            for _ in 0..Size::ext_size() {
+            let mut ext = Vec::with_capacity(Size::EXT_SIZE);
+            for _ in 0..Size::EXT_SIZE {
                 ext.push(pcg.gen());
             }
 
@@ -113,7 +112,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
         let oldstate = self.pcg.state.clone();
         self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
 
-        let mask = 2usize.pow(Size::ext_bits() as u32)-1;
+        let mask = 2usize.pow(Size::EXT_BITS)-1;
         let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
@@ -140,7 +139,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> Rng for
         let oldstate = self.pcg.state.clone();
         self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
         
-        let mask = 2usize.pow(Size::ext_bits() as u32)-1;
+        let mask = 2usize.pow(Size::EXT_BITS)-1;
         let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
@@ -181,7 +180,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<Itype> for ExtPc
         self.pcg.reseed(seed);
 
         //Update the extension array
-        for i in 0..Size::ext_size() {
+        for i in 0..Size::EXT_SIZE {
             self.ext[i] = self.pcg.gen();
         }
     }
@@ -208,7 +207,7 @@ impl<Itype, Xtype,MulMix, OutMix, Size> SeedableRng<[Itype; 2]> for ExtPcg<Itype
         self.pcg.reseed(seed);
 
         //Update the extension array
-        for i in 0..Size::ext_size() {
+        for i in 0..Size::EXT_SIZE {
             self.ext[i] = self.pcg.gen();
         }
     }
@@ -234,7 +233,7 @@ impl<Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng<[u64; 2]> for ExtPcg<u1
         self.pcg.reseed(seed);
 
         //Update the extension array
-        for i in 0..Size::ext_size() {
+        for i in 0..Size::EXT_SIZE {
             self.ext[i] = self.pcg.gen();
         }
     }
@@ -260,7 +259,7 @@ impl<Xtype,MulMix, OutMix, Size> SeedableRng<[u64; 4]> for ExtPcg<u128, Xtype, S
         self.pcg.reseed(seed);
 
         //Update the extension array
-        for i in 0..Size::ext_size() {
+        for i in 0..Size::EXT_SIZE {
             self.ext[i] = self.pcg.gen();
         }
     }

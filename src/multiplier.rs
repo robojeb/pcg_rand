@@ -24,8 +24,6 @@
  *     http://www.pcg-random.org
  */
 
-use extprim::u128::u128;
-
 /// This trait provides the multiplier for the internal LCG of the PCG generator
 /// Implementing this trait for a struct will allow providing your own
 /// multiplier for the PCG.
@@ -53,7 +51,7 @@ make_default_mul!(
     u16 => 12829u16;
     u32 => 747796405u32;
     u64 => 6364136223846793005u64;
-    u128 => u128::from_parts(2549297995355413924, 4865540595714422341)
+    u128 => 47026247687942121848144207491837523525 //u128::from_parts(2549297995355413924, 4865540595714422341)
 );
 
 /// Provides a default "good" multiplier based on the multiplier provided
@@ -76,5 +74,5 @@ make_mcg_mul!(
     u16 => 62169u16;
     u32 => 277803737u32;
     u64 => 12605985483714917081u64;
-    u128 => u128::from_parts(17766728186571221404,12605985483714917081)
+    u128 => 327738287884841127335028083622016905945//u128::from_parts(17766728186571221404,12605985483714917081)
 );

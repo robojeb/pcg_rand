@@ -1,6 +1,6 @@
 [package]
 name = "pcg_rand"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 
 homepage = "https://github.com/robojeb/pcg_rand"
@@ -24,6 +24,5 @@ name = "pcg_demo"
 path = "src/main.rs"
 
 [dependencies]
-
 rand = { version="0.4.2", features=["i128_support"]}
 num-traits = { version="0.2.3", features=["i128"]}

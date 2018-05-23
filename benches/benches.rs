@@ -7,7 +7,7 @@ extern crate test;
 
 use pcg_rand::Pcg32Basic;
 use test::Bencher;
-use rand::{Rng, XorShiftRng, FromEntropy};
+use rand::{Rng, XorShiftRng, FromEntropy, prng::Hc128Rng};
 use rand_core::RngCore;
 
 
@@ -53,4 +53,24 @@ fn xorshift_fill_bytes(b: &mut Bencher) {
     })
 }
 
+#[bench]
+fn hc128_next_u32(b: &mut Bencher) {
+    let mut rng = Hc128Rng::from_entropy();
+
+    b.iter(|| {
+        rng.next_u32()
+    })
+}
+
+#[bench]
+fn hc128_fill_bytes(b: &mut Bencher) {
+    b.bytes = 1024*1024;
+    let mut rng = Hc128Rng::from_entropy();
+
+    let mut x = vec![0; b.bytes as usize];
+
+    b.iter(|| {
+        rng.fill_bytes(x.as_mut_slice())
+    })
+}
 

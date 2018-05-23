@@ -300,7 +300,6 @@ pub type Pcg64Unique = UniqueXshRr12864;
 /// compiler can optimize and reduce the number of operations.
 pub type Pcg64Fast = McgXshRs12864;
 
-
 //
 // Seeding for all of the different RNG types
 //

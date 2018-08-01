@@ -8,7 +8,7 @@ pcg_rand
 To use this library add the following to your `Cargo.toml`
 
 ```
-pcg_rand = "0.7.0"
+pcg_rand = "0.9.0"
 ```
 
 PCG stands for Permuted Congruential generators. They are a simple family of
@@ -26,9 +26,7 @@ by their current location in memory.
 Future Work
 -----------
 
-* ~~Implement more generator types~~
 * Implement seeking for the generators
-* Implement Extended generators (If I can figure out that code)
 
 Changes
 -------
@@ -43,3 +41,9 @@ Changes
  some extra performance and reduces indirection. It also means that it is now
  easier to implement new streams and multipliers because you aren't bound
  to using the three things in PcgConsts.
+ * (7/31/2018): Remembered to update the README (including changelog). Migrated
+ to using the `rand: 0.5` crate which involves new methods. Most of the functions
+ are now not based on macro's but instead are fully generic and utilize the 
+ `num-traits` wrapping traits as needed. Additionally the crate now has support
+ for using the native `u128` since that is stable in Rust now. This pushes the 
+ minimum Rust version to 1.26. 

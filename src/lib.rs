@@ -113,6 +113,8 @@
 //! ```
 
 extern crate byteorder;
+#[macro_use]
+extern crate log;
 extern crate num_traits;
 extern crate rand;
 extern crate rand_core;

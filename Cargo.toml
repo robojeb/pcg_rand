@@ -28,3 +28,4 @@ rand = "0.5.0"
 rand_core = "0.2.0"
 num-traits = { version="0.2.3", features=["i128"]}
 byteorder = "1.2.2"
+log = "0.4.1"

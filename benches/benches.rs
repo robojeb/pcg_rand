@@ -7,7 +7,7 @@ extern crate test;
 
 use pcg_rand::Pcg32Basic;
 use test::Bencher;
-use rand::{Rng, XorShiftRng, FromEntropy, prng::Hc128Rng};
+use rand::{XorShiftRng, FromEntropy, prng::Hc128Rng};
 use rand_core::RngCore;
 
 

@@ -67,6 +67,7 @@ impl ReadByteOrder for u128 {
     }
 }
 
+#[derive(Clone)]
 pub struct PcgSeeder<T>{
     data: Vec<u8>,
     at_pos: usize,

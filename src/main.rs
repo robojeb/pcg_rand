@@ -21,7 +21,7 @@
 extern crate pcg_rand;
 extern crate rand;
 
-use rand::{RngCore, Rng, FromEntropy};
+use rand::{Rng, FromEntropy};
 use pcg_rand::{Pcg32Basic, Pcg32, Pcg64, Pcg32Unique, Pcg32L};
 
 

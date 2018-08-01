@@ -6,7 +6,7 @@ extern crate test;
 
 use pcg_rand::{Pcg64, Pcg64Fast, Pcg64Unique};
 use test::Bencher;
-use rand::{Rng, RngCore, FromEntropy};
+use rand::{RngCore, FromEntropy};
 
 #[bench]
 fn pcg64_next_u32(b: &mut Bencher) {

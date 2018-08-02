@@ -21,16 +21,17 @@
 extern crate pcg_rand;
 extern crate rand;
 
-use rand::{Rng, FromEntropy};
-use pcg_rand::{Pcg32Basic, Pcg32, Pcg64, Pcg32Unique, Pcg32L};
+use rand::{Rng, FromEntropy, SeedableRng};
+use pcg_rand::{Pcg32Basic, Pcg32, Pcg64, Pcg32Unique, Pcg32L, seeds::PcgSeeder};
 
 
 #[cfg(not(test))]
 fn main() {
-    let mut rng = Pcg32Basic::new_unseeded();
+    let mut rng = Pcg32Basic::from_seed(PcgSeeder::seed_with_stream(0, 1));
 
     // print a bunch of random numbers
-    println!("Here is the generator recovering from a (0,0) initialization: ");
+    println!("Here is the generator recovering from a (0,1) initialization: ");
+    println!("NOTE: The PCG crate always ensures the sequence is odd");
     for _ in 0..10 {
         println!("{: ^25}|{: ^25}|{: ^25}", rng.gen::<u32>(), rng.gen::<u32>(), rng.gen::<u32>());
     }
@@ -52,9 +53,6 @@ fn main() {
     for _ in 0..10 {
         println!("{: ^25}|{: ^25}|{: ^25}", rng.gen::<u32>(), rng.gen::<u32>(), rng.gen::<u32>());
     }
-
-    // //Later we will do party tricks
-    // //TODO: Implement the really big generators to get the party started
 
     println!("\nHere we show off what two unique stream generators with the same seed can do");
     println!("Example Code:

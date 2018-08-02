@@ -2,7 +2,7 @@ use std::mem::size_of;
 use std::marker::PhantomData;
 use std::convert::AsMut;
 use std::default::Default;
-use num_traits::{Zero, One};
+use num_traits::Zero;
 
 use byteorder::{LE, ByteOrder};
 
@@ -80,9 +80,47 @@ impl<T> AsMut<[u8]> for PcgSeeder<T> {
     }
 }
 
-impl<T: Sized + ReadByteOrder + Zero + One> Default for PcgSeeder<T> {
+/*
+ * The default seeds will control what seeds are used by `new_unseeded` calls. 
+ * These values were chosen at random.
+ */
+impl Default for PcgSeeder<u128> {
     fn default() -> Self {
-        PcgSeeder::seed_with_stream(T::zero(), T::one())
+        PcgSeeder::seed_with_stream(
+            0xECC1C32BE531D51A93DCE189F91629F4, 
+            0xF1CB2035E14FF74B46EF3505C5386547)
+    }
+}
+
+impl Default for PcgSeeder<u64> {
+    fn default() -> Self {
+        PcgSeeder::seed_with_stream(
+            0x18013CAD3A483F72, 
+            0x51DBFCDA0D6B21D4)
+    }
+}
+
+impl Default for PcgSeeder<u32> {
+    fn default() -> Self {
+        PcgSeeder::seed_with_stream(
+            0x308A20A0, 
+            0xD13351F1)
+    }
+}
+
+impl Default for PcgSeeder<u16> {
+    fn default() -> Self {
+        PcgSeeder::seed_with_stream(
+            0xAA19, 
+            0x4FD8)
+    }
+}
+
+impl Default for PcgSeeder<u8> {
+    fn default() -> Self {
+        PcgSeeder::seed_with_stream(
+            0xE1, 
+            0xB3)
     }
 }
 

@@ -72,7 +72,7 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>,
     Size: ExtSize,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng + SeedableRng
 {
 
     /// Create a new ExtPcg from an existing PCG. This will consume
@@ -93,13 +93,31 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
                 _size : PhantomData::<Size>,
             }
     }
+}
 
-    /// Create a new unseeded ExtPcg. 
+impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
+    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
+    where
+    Itype: Zero + One,
+    Xtype: PcgOps + BitSize,
+    Standard: Distribution<Xtype>, 
+    StreamMix: Stream<Itype>, 
+    MulMix: Multiplier<Itype>, 
+    OutMix: OutputMixin<Itype, Xtype>,
+    Size: ExtSize,
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng + SeedableRng,
+    PcgSeeder<Itype>: Default
+{
+    /// Creates a new ePCG without specifying a seed. 
+    /// WARNING: Every PCG created with this method will produce the same 
+    /// output. In most cases a seeded PCG will be more useful, please check
+    /// the references for `rand::SeedableRng` and `rand::FromEntropy` for 
+    /// methods to seed a ePCG. 
     pub fn new_unseeded() -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
     {
         let pcg = PcgEngine::<Itype, Xtype, StreamMix, MulMix, OutMix>::new_unseeded();
         Self::from_pcg(pcg)
-    }            
+    }       
 }
 
 impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
@@ -194,8 +212,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng for ExtPcg<Itype
     MulMix: Multiplier<Itype>, 
     OutMix: OutputMixin<Itype, Xtype>,
     Size: ExtSize, ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> : RngCore,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : RngCore + SeedableRng<Seed=PcgSeeder<Itype>>
-    
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : RngCore + SeedableRng<Seed=PcgSeeder<Itype>>,
+    PcgSeeder<Itype>: Default
 {   
     type Seed = PcgSeeder<Itype>;
 

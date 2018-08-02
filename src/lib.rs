@@ -89,11 +89,11 @@
 //! extern crate pcg_rand;
 //! extern crate rand;
 //!
-//! use rand::Rng;
+//! use rand::{Rng, FromEntropy};
 //! use pcg_rand::Pcg32;
 //!
 //! fn main() {
-//!     let mut pcg = Pcg32::new_unseeded();
+//!     let mut pcg = Pcg32::from_entropy();
 //! 
 //!     let x : u32 = pcg.gen();
 //! }
@@ -103,13 +103,20 @@
 //! directly, or by building them from a generator at its current state.
 //!
 //! ```
-//! use pcg_rand::extension::{Pcg32Ext, ExtPcg, Ext256};
-//! use pcg_rand::Pcg32Unique;
+//! extern crate pcg_rand;
+//! extern crate rand;
+//! 
+//! use pcg_rand::{
+//!     Pcg32Unique,
+//!     extension::{Pcg32Ext, ExtPcg, Ext256}
+//! };
+//! use rand::FromEntropy;
+//! 
 //! //Create an extended generator explicitly
-//! let ext1 = Pcg32Ext::<Ext256>::new_unseeded();
+//! let ext1 = Pcg32Ext::<Ext256>::from_entropy();
 //! 
 //! //Create from another PCG
-//! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::new_unseeded());
+//! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::from_entropy());
 //! ```
 
 extern crate byteorder;
@@ -158,16 +165,16 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix,
     Itype: Zero,  
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype> {
-            
+    OutMix: OutputMixin<Itype, Xtype>,
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: SeedableRng {
+    
+    /// Creates a new PCG without specifying a seed. 
+    /// WARNING: Every PCG created with this method will produce the same 
+    /// output. In most cases a seeded PCG will be more useful, please check
+    /// the references for `rand::SeedableRng` and `rand::FromEntropy` for 
+    /// methods to seed a PCG. 
     pub fn new_unseeded() -> Self {
-        PcgEngine {
-            state      : Itype::zero(),
-            stream_mix : StreamMix::build(None),
-            mul_mix    : PhantomData::<MulMix>,
-            out_mix    : PhantomData::<OutMix>,
-            phantom    : PhantomData::<Xtype>,
-        }
+        PcgEngine::from_seed(Default::default())
     }        
 }
 
@@ -309,7 +316,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix> SeedableRng for PcgEngine<Itype, X
     Itype: Sized + seeds::ReadByteOrder + Zero + One,
     StreamMix: Stream<Itype>, 
     MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>
+    OutMix: OutputMixin<Itype, Xtype>,
+    PcgSeeder<Itype>: Default
 {
     type Seed = PcgSeeder<Itype>;
 
@@ -339,6 +347,11 @@ pub struct Pcg32Basic {
 }
 
 impl Pcg32Basic {
+    /// Creates a new PCG without specifying a seed. 
+    /// WARNING: Every PCG created with this method will produce the same 
+    /// output. In most cases a seeded PCG will be more useful, please check
+    /// the references for `rand::SeedableRng` and `rand::FromEntropy` for 
+    /// methods to seed a PCG. 
     pub fn new_unseeded() -> Pcg32Basic {
         Pcg32Basic::from_seed(Default::default())
     }

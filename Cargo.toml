@@ -19,12 +19,8 @@ description = "An implementation of the PCG family of random number generators i
 name = "pcg_rand"
 path = "src/lib.rs"
 
-[[bin]]
-name = "pcg_demo"
-path = "src/main.rs"
-
 [dependencies]
-rand = "0.5.4"
+rand = { version="0.5.4", features=["i128_support"]}
 rand_core = "0.2.1"
 num-traits = { version="0.2.5", features=["i128"]}
 byteorder = "1.2.4"

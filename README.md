@@ -8,7 +8,7 @@ pcg_rand
 To use this library add the following to your `Cargo.toml`
 
 ```
-pcg_rand = "0.9.0"
+pcg_rand = "0.9.1"
 ```
 
 PCG stands for Permuted Congruential generators. They are a simple family of
@@ -47,3 +47,7 @@ Changes
  `num-traits` wrapping traits as needed. Additionally the crate now has support
  for using the native `u128` since that is stable in Rust now. This pushes the 
  minimum Rust version to 1.26. 
+ * (8/2/2018): Provided better defaults for the `new_unseeded` function so that
+ it can be useful for testing. Improved the docs to suggest seeding and updated
+ the documentation examples to use `from_entropy` instead of `new_unseeded` to 
+ promote good use of the generators. 

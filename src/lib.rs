@@ -118,6 +118,7 @@
 //! //Create from another PCG
 //! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::from_entropy());
 //! ```
+#![feature(tool_lints)]
 
 extern crate byteorder;
 extern crate num_traits;
@@ -202,7 +203,8 @@ impl<Itype, StreamMix, MulMix, OutMix> RngCore for PcgEngine<Itype, u32, StreamM
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        Ok(self.fill_bytes(dest))
+        self.fill_bytes(dest);
+        Ok(())
     }
 }
 
@@ -230,7 +232,8 @@ impl<Itype, StreamMix, MulMix, OutMix> RngCore for PcgEngine<Itype, u64, StreamM
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        Ok(self.fill_bytes(dest))
+        self.fill_bytes(dest);
+        Ok(())
     }
 }
 
@@ -362,7 +365,7 @@ impl RngCore for Pcg32Basic {
     fn next_u32(&mut self) -> u32 {
         let oldstate = Wrapping(self.state);
         //Update the state as an lcg
-        self.state = (oldstate * Wrapping(6364136223846793005u64) + Wrapping(self.inc | 1)).0;
+        self.state = (oldstate * Wrapping(6_364_136_223_846_793_005u64) + Wrapping(self.inc | 1)).0;
 
         //Prepare the permutation on the output
         let xorshifted : u32 = (((oldstate >> 18usize) ^ oldstate) >> 27usize).0 as u32;
@@ -381,7 +384,8 @@ impl RngCore for Pcg32Basic {
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        Ok(self.fill_bytes(dest))
+        self.fill_bytes(dest);
+        Ok(())
     }
 }
 

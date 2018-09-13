@@ -88,8 +88,8 @@ impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
             }
 
             ExtPcg {
-                pcg : pcg,
-                ext : ext,
+                pcg,
+                ext,
                 _size : PhantomData::<Size>,
             }
     }
@@ -137,7 +137,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
         let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
-        self.ext[pick] = self.ext[pick] + 1;
+        self.ext[pick] += 1;
         OutMix::output(oldstate) ^ ext_val
     }
 
@@ -150,7 +150,8 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ::rand_core::Error> {
-        Ok(self.fill_bytes(dest))
+        self.fill_bytes(dest);
+        Ok(())
     }
 }
 
@@ -174,7 +175,7 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
         let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
-        self.ext[pick] = self.ext[pick] + 1;
+        self.ext[pick] += 1;
         OutMix::output(oldstate) ^ ext_val
     }
 
@@ -183,7 +184,8 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ::rand_core::Error> {
-        Ok(self.fill_bytes(dest))
+        self.fill_bytes(dest);
+        Ok(())
     }
 }
 

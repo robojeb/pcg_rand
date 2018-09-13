@@ -48,11 +48,12 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
         let mut state = state;
         let sparebits = Itype::BITS - Xtype::BITS;
         
-        let opbits : usize = if sparebits - 5 >= 64 { 5 } else
-                        if sparebits - 4 >= 32 { 4 } else
-                        if sparebits - 3 >= 16 { 3 } else 
-                        if sparebits - 2 >= 4  { 2 } else
-                        if sparebits - 1 >= 1  { 1 } else { 0 };
+        let opbits : usize = if sparebits - 5 >= 64 { 5 } 
+                        else if sparebits - 4 >= 32 { 4 } 
+                        else if sparebits - 3 >= 16 { 3 } 
+                        else if sparebits - 2 >= 4  { 2 } 
+                        else if sparebits > 1  { 1 } 
+                        else { 0 };
         let mask = (1 << opbits) -1;
         let maxrandshift = mask;
         let topspare = opbits;
@@ -83,10 +84,10 @@ impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin
         
         let sparebits = Itype::BITS - Xtype::BITS;
         let xtypebits = Xtype::BITS;
-        let wantedopbits : usize = if xtypebits >= 128 { 7 } else 
-                            if xtypebits >= 64 { 6 } else 
-                            if xtypebits >= 32 { 5 } else
-                            if xtypebits >= 16 { 4 } else { 3 };
+        let wantedopbits : usize = if xtypebits >= 128 { 7 }  
+                            else if xtypebits >= 64 { 6 }  
+                            else if xtypebits >= 32 { 5 } 
+                            else if xtypebits >= 16 { 4 } else { 3 };
         
         let opbits : usize = if sparebits >= wantedopbits { 
             wantedopbits 

@@ -53,8 +53,8 @@ impl ReadByteOrder for u64 {
 
 impl ReadByteOrder for u128 {
     fn read(src: &[u8]) -> Self {
-        let top = LE::read_u64(src) as u128;
-        let bottom = LE::read_u64(&src[size_of::<u64>()..]) as u128;
+        let top = u128::from(LE::read_u64(src));
+        let bottom = u128::from(LE::read_u64(&src[size_of::<u64>()..]));
 
         (top << 64) | bottom
     }
@@ -87,24 +87,24 @@ impl<T> AsMut<[u8]> for PcgSeeder<T> {
 impl Default for PcgSeeder<u128> {
     fn default() -> Self {
         PcgSeeder::seed_with_stream(
-            0xECC1C32BE531D51A93DCE189F91629F4, 
-            0xF1CB2035E14FF74B46EF3505C5386547)
+            0xECC1_C32B_E531_D51A_93DC_E189_F916_29F4, 
+            0xF1CB_2035_E14F_F74B_46EF_3505_C538_6547)
     }
 }
 
 impl Default for PcgSeeder<u64> {
     fn default() -> Self {
         PcgSeeder::seed_with_stream(
-            0x18013CAD3A483F72, 
-            0x51DBFCDA0D6B21D4)
+            0x1801_3CAD_3A48_3F72, 
+            0x51DB_FCDA_0D6B_21D4)
     }
 }
 
 impl Default for PcgSeeder<u32> {
     fn default() -> Self {
         PcgSeeder::seed_with_stream(
-            0x308A20A0, 
-            0xD13351F1)
+            0x308A_20A0, 
+            0xD133_51F1)
     }
 }
 
@@ -129,6 +129,7 @@ impl<T: Sized + ReadByteOrder + Zero> PcgSeeder<T> {
         PcgSeeder::seed_with_stream(seed, T::zero())
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     pub fn seed_with_stream(seed: T, stream: T) -> PcgSeeder<T> {
         let mut data = vec![0; size_of::<T>()*2];
         {
@@ -138,7 +139,7 @@ impl<T: Sized + ReadByteOrder + Zero> PcgSeeder<T> {
         }
 
         PcgSeeder {
-            data: data,
+            data,
             at_pos: 0,
             _type: PhantomData,
         }

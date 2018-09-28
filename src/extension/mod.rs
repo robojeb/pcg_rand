@@ -17,123 +17,132 @@
  *
  */
 
-//! Extended PCG generators utilize a simple method to dramatically extend the 
-//! period of the genrators. In addition to extending the period of the 
+//! Extended PCG generators utilize a simple method to dramatically extend the
+//! period of the genrators. In addition to extending the period of the
 //! generator it ensures that the generators have K-dimensional
 //! equidistribution. This means that the generator will produce every possible
-//! K-tuple uniformly. 
-//! 
-//! These generators require `K*sizeof(Isize)` extra bytes to provide their 
-//! equidistribution. 
-//! 
-//! These extended generators are currently in a beta state. They are 
-//! implemented according to my understanding of the generator extension 
-//! technique presented in the PCG paper. 
+//! K-tuple uniformly.
+//!
+//! These generators require `K*sizeof(Isize)` extra bytes to provide their
+//! equidistribution.
+//!
+//! These extended generators are currently in a beta state. They are
+//! implemented according to my understanding of the generator extension
+//! technique presented in the PCG paper.
 //! You can use these generators if you want, and if you would like to help
 //! me review the code and determine if my implementation is correct that would
-//! be wonderful. 
+//! be wonderful.
 
 pub mod extsizes;
 
 pub use self::extsizes::*;
 
-use rand::{Rng, distributions::{Standard, Distribution}};
+use super::multiplier::*;
+use super::numops::*;
+use super::outputmix::*;
+use super::seeds::PcgSeeder;
+use super::stream::*;
+use super::PcgEngine;
+use num_traits::{One, Zero};
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
 use rand_core::{RngCore, SeedableRng};
 use std::marker::PhantomData;
-use super::PcgEngine;
-use super::numops::*;
-use super::stream::*;
-use super::outputmix::*;
-use super::multiplier::*;
-use num_traits::{Zero, One};
-use super::seeds::PcgSeeder;
 
-/// An extended PCG generator. These generators provide K-dimensional 
+/// An extended PCG generator. These generators provide K-dimensional
 /// equidistribution. Where K is specified by the value of the Size parameter
 /// which must be an ExtSize type.
-pub struct ExtPcg<Itype, Xtype, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, Xtype>, 
-    Size: ExtSize>
-{
-    pcg : PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>,
-    ext : Vec<Xtype>,
-    _size : PhantomData<Size>,
-}
-
-impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where
-    Itype: Zero + One,
-    Xtype: PcgOps + BitSize,
-    Standard: Distribution<Xtype>, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
+pub struct ExtPcg<
+    Itype,
+    Xtype,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, Xtype>,
     Size: ExtSize,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng + SeedableRng
-{
-
-    /// Create a new ExtPcg from an existing PCG. This will consume
-    /// Size random values to initialize the extension array.
-    pub fn from_pcg(pcg: PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>) ->
-        ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> {
-            let mut pcg = pcg;
-
-            //Create the starting extension array
-            let mut ext = Vec::with_capacity(Size::EXT_SIZE);
-            for _ in 0..Size::EXT_SIZE {
-                ext.push(pcg.gen());
-            }
-
-            ExtPcg {
-                pcg,
-                ext,
-                _size : PhantomData::<Size>,
-            }
-    }
+> {
+    pcg: PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>,
+    ext: Vec<Xtype>,
+    _size: PhantomData<Size>,
 }
 
-impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where
+impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
+    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
+where
     Itype: Zero + One,
     Xtype: PcgOps + BitSize,
-    Standard: Distribution<Xtype>, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
+    Standard: Distribution<Xtype>,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, Xtype>,
     Size: ExtSize,
     PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng + SeedableRng,
-    PcgSeeder<Itype>: Default
 {
-    /// Creates a new ePCG without specifying a seed. 
-    /// WARNING: Every PCG created with this method will produce the same 
-    /// output. In most cases a seeded PCG will be more useful, please check
-    /// the references for `rand::SeedableRng` and `rand::FromEntropy` for 
-    /// methods to seed a ePCG. 
-    pub fn new_unseeded() -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    {
-        let pcg = PcgEngine::<Itype, Xtype, StreamMix, MulMix, OutMix>::new_unseeded();
-        Self::from_pcg(pcg)
-    }       
+    /// Create a new ExtPcg from an existing PCG. This will consume
+    /// Size random values to initialize the extension array.
+    pub fn from_pcg(
+        pcg: PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>,
+    ) -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> {
+        let mut pcg = pcg;
+
+        //Create the starting extension array
+        let mut ext = Vec::with_capacity(Size::EXT_SIZE);
+        for _ in 0..Size::EXT_SIZE {
+            ext.push(pcg.gen());
+        }
+
+        ExtPcg {
+            pcg,
+            ext,
+            _size: PhantomData::<Size>,
+        }
+    }
 }
 
-impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
-    ExtPcg<Itype, u32, StreamMix, MulMix, OutMix, Size>
-    where Itype: PcgOps + AsUsize + BitSize + AsSmaller<u32> + Clone, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
-    OutMix: OutputMixin<Itype, u32>,
-    Size: ExtSize {
+impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
+    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
+where
+    Itype: Zero + One,
+    Xtype: PcgOps + BitSize,
+    Standard: Distribution<Xtype>,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
+    OutMix: OutputMixin<Itype, Xtype>,
+    Size: ExtSize,
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: Rng + SeedableRng,
+    PcgSeeder<Itype>: Default,
+{
+    /// Creates a new ePCG without specifying a seed.
+    /// WARNING: Every PCG created with this method will produce the same
+    /// output. In most cases a seeded PCG will be more useful, please check
+    /// the references for `rand::SeedableRng` and `rand::FromEntropy` for
+    /// methods to seed a ePCG.
+    pub fn new_unseeded() -> ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> {
+        let pcg = PcgEngine::<Itype, Xtype, StreamMix, MulMix, OutMix>::new_unseeded();
+        Self::from_pcg(pcg)
+    }
+}
 
+impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore
+    for ExtPcg<Itype, u32, StreamMix, MulMix, OutMix, Size>
+where
+    Itype: PcgOps + AsUsize + BitSize + AsSmaller<u32> + Clone,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
+    OutMix: OutputMixin<Itype, u32>,
+    Size: ExtSize,
+{
     #[inline]
     fn next_u32(&mut self) -> u32 {
         let oldstate = self.pcg.state.clone();
-        self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
+        self.pcg.state = self
+            .pcg
+            .stream_mix
+            .increment()
+            .wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
 
-        let mask = 2usize.pow(Size::EXT_BITS)-1;
+        let mask = 2usize.pow(Size::EXT_BITS) - 1;
         let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
@@ -155,23 +164,28 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
     }
 }
 
-impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
-    ExtPcg<Itype, u64, StreamMix, MulMix, OutMix, Size>
-    where Itype: PcgOps + AsUsize + BitSize + AsSmaller<u64> + Clone, 
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
+impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore
+    for ExtPcg<Itype, u64, StreamMix, MulMix, OutMix, Size>
+where
+    Itype: PcgOps + AsUsize + BitSize + AsSmaller<u64> + Clone,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, u64>,
-    Size: ExtSize {
-
+    Size: ExtSize,
+{
     fn next_u32(&mut self) -> u32 {
         self.next_u64() as u32
     }
 
     fn next_u64(&mut self) -> u64 {
         let oldstate = self.pcg.state.clone();
-        self.pcg.state = self.pcg.stream_mix.increment().wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
-        
-        let mask = 2usize.pow(Size::EXT_BITS)-1;
+        self.pcg.state = self
+            .pcg
+            .stream_mix
+            .increment()
+            .wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
+
+        let mask = 2usize.pow(Size::EXT_BITS) - 1;
         let pick = self.pcg.state.as_usize() & mask;
 
         let ext_val = self.ext[pick];
@@ -189,9 +203,12 @@ impl<Itype, StreamMix, MulMix, OutMix, Size> RngCore for
     }
 }
 
-pub type SetseqXshRr6432ext<Size> = ExtPcg<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin, Size>;
-pub type SetseqXshRr12832ext<Size> = ExtPcg<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
-pub type SetseqXshRr12864ext<Size> = ExtPcg<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
+pub type SetseqXshRr6432ext<Size> =
+    ExtPcg<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin, Size>;
+pub type SetseqXshRr12832ext<Size> =
+    ExtPcg<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
+pub type SetseqXshRr12864ext<Size> =
+    ExtPcg<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin, Size>;
 
 /// The extended version of the Pcg32 generator
 pub type Pcg32Ext<Size> = SetseqXshRr6432ext<Size>;
@@ -205,18 +222,21 @@ pub type Pcg64Ext<Size> = SetseqXshRr12864ext<Size>;
 //
 
 //These generics get pretty insane
-impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng for ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> 
-    where 
+impl<Itype, Xtype, StreamMix, MulMix, OutMix, Size> SeedableRng
+    for ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size>
+where
     Itype: ::seeds::ReadByteOrder + Default + Zero + One,
-    Xtype: PcgOps + BitSize, 
+    Xtype: PcgOps + BitSize,
     Standard: Distribution<Xtype>,
-    StreamMix: Stream<Itype>, 
-    MulMix: Multiplier<Itype>, 
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, Xtype>,
-    Size: ExtSize, ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size> : RngCore,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix> : RngCore + SeedableRng<Seed=PcgSeeder<Itype>>,
-    PcgSeeder<Itype>: Default
-{   
+    Size: ExtSize,
+    ExtPcg<Itype, Xtype, StreamMix, MulMix, OutMix, Size>: RngCore,
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>:
+        RngCore + SeedableRng<Seed = PcgSeeder<Itype>>,
+    PcgSeeder<Itype>: Default,
+{
     type Seed = PcgSeeder<Itype>;
 
     fn from_seed(seed: Self::Seed) -> Self {

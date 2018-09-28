@@ -24,7 +24,7 @@
  *     http://www.pcg-random.org
  */
 
-use num_traits::{One, FromPrimitive};
+use num_traits::{FromPrimitive, One};
 use seeds::PcgSeeder;
 
 /// A stream provides the increment to the LCG. This increment should be
@@ -32,8 +32,8 @@ use seeds::PcgSeeder;
 /// of the state.
 pub trait Stream<Itype> {
     fn build(seed: Option<&mut PcgSeeder<Itype>>) -> Self;
-    
-    fn set_stream(&mut self, _stream_seq : Itype){
+
+    fn set_stream(&mut self, _stream_seq: Itype) {
         panic!("Stream setting unimplemented for this stream type");
     }
 
@@ -54,11 +54,11 @@ macro_rules! make_one_seq {
                 OneSeqStream
             }
 
-            #[inline(always)]    
+            #[inline(always)]
             fn increment(&self) -> $t {
                 $e
             }
-            
+
             fn get_stream(&self) -> $t {
                 $e
             }
@@ -84,11 +84,11 @@ macro_rules! make_no_seq {
                 NoSeqStream
             }
 
-            #[inline(always)]    
+            #[inline(always)]
             fn increment(&self) -> $t {
                 $e
             }
-            
+
             fn get_stream(&self) -> $t {
                 $e
             }
@@ -102,12 +102,11 @@ make_no_seq!{
     u128 => 0
 }
 
-
 /// By default this stream provides the same stream as OneSeqStream. The
 /// advantage to this stream is it can be changed at runtime. This incurs an
-/// extra Itype of storage overhead. 
+/// extra Itype of storage overhead.
 pub struct SpecificSeqStream<Itype> {
-    inc : Itype
+    inc: Itype,
 }
 
 macro_rules! make_set_seq {
@@ -122,18 +121,18 @@ macro_rules! make_set_seq {
                         inc: seed.get(),
                     },
                 }
-                
+
             }
 
             fn set_stream(&mut self, stream_seq : $t) {
                 self.inc = stream_seq | $t::one();
             }
 
-            #[inline(always)]    
+            #[inline(always)]
             fn increment(&self) -> $t {
                 self.inc
             }
-            
+
             fn get_stream(&self) -> $t {
                 self.inc
             }
@@ -147,25 +146,25 @@ make_set_seq!{
     u128 => 117_397_592_171_526_113_268_558_934_119_004_209_487u128 //u128::from_parts(6364136223846793005,1442695040888963407)
 }
 
-/// This stream provides a stream based on the current location of the 
-/// generator in memory. This means that two PCG with the same seed 
+/// This stream provides a stream based on the current location of the
+/// generator in memory. This means that two PCG with the same seed
 /// can produce different sequences of numbers. Though if the generator is
 /// moved it will change the stream.
 pub struct UniqueSeqStream;
 
-impl<Itype> Stream<Itype> for UniqueSeqStream 
-    where 
-    Itype: FromPrimitive + ::seeds::ReadByteOrder {
-
+impl<Itype> Stream<Itype> for UniqueSeqStream
+where
+    Itype: FromPrimitive + ::seeds::ReadByteOrder,
+{
     fn build(_: Option<&mut PcgSeeder<Itype>>) -> Self {
         UniqueSeqStream
     }
-    
+
     #[inline(always)]
     fn increment(&self) -> Itype {
         Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
     }
-    
+
     fn get_stream(&self) -> Itype {
         Itype::from_usize(self as *const UniqueSeqStream as usize | 1).unwrap()
     }

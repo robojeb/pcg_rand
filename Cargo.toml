@@ -15,6 +15,9 @@ readme = "README.md"
 
 description = "An implementation of the PCG family of random number generators in pure Rust"
 
+[badges]
+maintenance = { status = "passively-maintained" }
+
 [lib]
 name = "pcg_rand"
 path = "src/lib.rs"

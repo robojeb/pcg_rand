@@ -17,13 +17,13 @@
  *
  */
 
-/// The types of numaric options that PCG needs to operate. 
+/// The types of numaric options that PCG needs to operate.
 /// Some day this will be replaced with Num-traits when they support
 /// wrapping opts for everything, and when extprim supports those traits as
 /// well.
 pub trait PcgOps {
-    fn wrap_mul(&self, rhs : Self) -> Self;
-    fn wrap_add(&self, rhs : Self) -> Self;
+    fn wrap_mul(&self, rhs: Self) -> Self;
+    fn wrap_add(&self, rhs: Self) -> Self;
 }
 
 /// Convert a value to a usize don't care about overflow etc
@@ -31,7 +31,7 @@ pub trait AsUsize {
     fn as_usize(&self) -> usize;
 }
 
-/// A trait that determines how many bits are in a type. 
+/// A trait that determines how many bits are in a type.
 pub trait BitSize {
     const BITS: usize;
 }
@@ -54,19 +54,19 @@ macro_rules! basic_ops {
                 *self as usize
             }
         }
-        
+
         impl PcgOps for $t {
             #[inline]
             fn wrap_mul(&self, rhs : $t) -> $t {
-                self.wrapping_mul(rhs) 
+                self.wrapping_mul(rhs)
             }
-            
+
             #[inline]
             fn wrap_add(&self, rhs : $t) -> $t {
                 self.wrapping_add(rhs)
             }
         }
-            
+
         )*
     }
 }
@@ -88,7 +88,7 @@ macro_rules! smaller {
                     self as $other
                 }
             }
-        )*       
+        )*
     }
 }
 
@@ -108,9 +108,9 @@ smaller!(
 // impl PcgOps for u128 {
 //     #[inline]
 //     fn wrap_mul(&self, rhs : u128) -> u128 {
-//         self.wrapping_mul(rhs) 
+//         self.wrapping_mul(rhs)
 //     }
-    
+
 //     #[inline]
 //     fn wrap_add(&self, rhs : u128) -> u128 {
 //         self.wrapping_add(rhs)

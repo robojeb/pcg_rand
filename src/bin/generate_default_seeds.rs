@@ -17,21 +17,34 @@
  *
  */
 
-
 extern crate pcg_rand;
 extern crate rand;
 
-use rand::{Rng, FromEntropy};
-use pcg_rand::{Pcg64};
-
+use pcg_rand::Pcg64;
+use rand::{FromEntropy, Rng};
 
 #[cfg(not(test))]
 fn main() {
-
-    let mut seeds : Pcg64 = Pcg64::from_entropy();
-    println!("u128: 0x{:X} 0x{:X}", seeds.gen::<u128>(), seeds.gen::<u128>());
-    println!("u64 : 0x{:X} 0x{:X}", seeds.gen::<u64>(), seeds.gen::<u64>());
-    println!("u32 : 0x{:X} 0x{:X}", seeds.gen::<u32>(), seeds.gen::<u32>());
-    println!("u16 : 0x{:X} 0x{:X}", seeds.gen::<u16>(), seeds.gen::<u16>());
+    let mut seeds: Pcg64 = Pcg64::from_entropy();
+    println!(
+        "u128: 0x{:X} 0x{:X}",
+        seeds.gen::<u128>(),
+        seeds.gen::<u128>()
+    );
+    println!(
+        "u64 : 0x{:X} 0x{:X}",
+        seeds.gen::<u64>(),
+        seeds.gen::<u64>()
+    );
+    println!(
+        "u32 : 0x{:X} 0x{:X}",
+        seeds.gen::<u32>(),
+        seeds.gen::<u32>()
+    );
+    println!(
+        "u16 : 0x{:X} 0x{:X}",
+        seeds.gen::<u16>(),
+        seeds.gen::<u16>()
+    );
     println!("u8  : 0x{:X} 0x{:X}", seeds.gen::<u8>(), seeds.gen::<u8>());
 }

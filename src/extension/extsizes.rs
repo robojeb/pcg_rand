@@ -18,14 +18,14 @@
  */
 
 /// This trait helps define the size of the extension of the PCG generator
-/// this allows the size of the extension to effectively be part of the 
-/// type of the extended generator. 
-/// 
+/// this allows the size of the extension to effectively be part of the
+/// type of the extended generator.
+///
 /// These extensions have to be a power of two based on the way the generator
 /// utilizes its extension.
-/// This could be made much better with associated constants and constant 
+/// This could be made much better with associated constants and constant
 /// functions, or by type level numbers.
-/// 
+///
 /// Already provided are:
 ///  * Ext2
 ///  * Ext4

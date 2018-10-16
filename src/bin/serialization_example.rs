@@ -19,12 +19,14 @@
 
 extern crate pcg_rand;
 extern crate rand;
+
+#[cfg(feature = "serde1")]
 extern crate serde_json;
 
 use pcg_rand::{Pcg32, Pcg32Oneseq};
 use rand::{FromEntropy, Rng};
 
-#[cfg(all(not(test), feature = "serde"))]
+#[cfg(all(not(test), feature = "serde1"))]
 fn main() {
     let a: Pcg32 = Pcg32::from_entropy();
     let b: Pcg32Oneseq = Pcg32Oneseq::from_entropy();

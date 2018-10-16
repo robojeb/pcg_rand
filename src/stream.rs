@@ -45,6 +45,7 @@ pub trait Stream<Itype> {
 /// This sequence stream defines constants as provided by the PCG paper.
 /// This struct is implemented with a macro to provide values for each
 /// Stream<Itype>.
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct OneSeqStream;
 
 macro_rules! make_one_seq {
@@ -75,6 +76,7 @@ make_one_seq!{
 /// This stream provides an increment of 0 to the LCG. This turns the
 /// LCG into a MCG, which while being less statistically sound than an LCG,
 /// it is faster.
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct NoSeqStream;
 
 macro_rules! make_no_seq {
@@ -105,6 +107,7 @@ make_no_seq!{
 /// By default this stream provides the same stream as OneSeqStream. The
 /// advantage to this stream is it can be changed at runtime. This incurs an
 /// extra Itype of storage overhead.
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct SpecificSeqStream<Itype> {
     inc: Itype,
 }
@@ -150,6 +153,7 @@ make_set_seq!{
 /// generator in memory. This means that two PCG with the same seed
 /// can produce different sequences of numbers. Though if the generator is
 /// moved it will change the stream.
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct UniqueSeqStream;
 
 impl<Itype> Stream<Itype> for UniqueSeqStream

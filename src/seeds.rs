@@ -122,7 +122,6 @@ impl<T: Sized + ReadByteOrder + Zero> PcgSeeder<T> {
         PcgSeeder::seed_with_stream(seed, T::zero())
     }
 
-    #[allow(clippy::needless_pass_by_value)]
     pub fn seed_with_stream(seed: T, stream: T) -> PcgSeeder<T> {
         let mut data = vec![0; size_of::<T>() * 2];
         {

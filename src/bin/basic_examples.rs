@@ -20,7 +20,9 @@
 extern crate pcg_rand;
 extern crate rand;
 
-use pcg_rand::{seeds::PcgSeeder, Pcg32, Pcg32Basic, Pcg32L, Pcg32Unique, Pcg64};
+use pcg_rand::{seeds::PcgSeeder, Pcg32, Pcg32Basic, Pcg32Unique};
+#[cfg(feature = "u128")]
+use pcg_rand::{Pcg32L, Pcg64};
 use rand::{FromEntropy, Rng, SeedableRng};
 
 #[cfg(not(test))]
@@ -50,28 +52,31 @@ fn main() {
         );
     }
 
-    let mut rng: Pcg64 = Pcg64::from_entropy();
-    println!("\nHere is the 64bit generator with random seed and increment: ");
-    for _ in 0..10 {
-        println!(
-            "{: ^25}|{: ^25}|{: ^25}",
-            rng.gen::<u64>(),
-            rng.gen::<u64>(),
-            rng.gen::<u64>()
-        );
-    }
+    #[cfg(feature = "u128")]
+    {
+        let mut rng: Pcg64 = Pcg64::from_entropy();
+        println!("\nHere is the 64bit generator with random seed and increment: ");
+        for _ in 0..10 {
+            println!(
+                "{: ^25}|{: ^25}|{: ^25}",
+                rng.gen::<u64>(),
+                rng.gen::<u64>(),
+                rng.gen::<u64>()
+            );
+        }
 
-    let mut rng: Pcg32L = Pcg32L::from_entropy();
-    println!(
-        "\nHere is the 32bit generator with 128 bits of internal state random seed and increment: "
-    );
-    for _ in 0..10 {
+        let mut rng: Pcg32L = Pcg32L::from_entropy();
         println!(
-            "{: ^25}|{: ^25}|{: ^25}",
-            rng.gen::<u32>(),
-            rng.gen::<u32>(),
-            rng.gen::<u32>()
+            "\nHere is the 32bit generator with 128 bits of internal state random seed and increment: "
         );
+        for _ in 0..10 {
+            println!(
+                "{: ^25}|{: ^25}|{: ^25}",
+                rng.gen::<u32>(),
+                rng.gen::<u32>(),
+                rng.gen::<u32>()
+            );
+        }
     }
 
     println!("\nHere we show off what two unique stream generators with the same seed can do");

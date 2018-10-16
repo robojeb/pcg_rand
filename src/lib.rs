@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pcg_rand = "0.9.1"
+//! pcg_rand = "0.9.3"
 //! ```
 //! #Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy
@@ -118,12 +118,17 @@
 //! //Create from another PCG
 //! let ext2 : ExtPcg<_,_,_,_,_,Ext256> = ExtPcg::from_pcg(Pcg32Unique::from_entropy());
 //! ```
-#![feature(tool_lints)]
-
 extern crate byteorder;
 extern crate num_traits;
 extern crate rand;
 extern crate rand_core;
+
+#[cfg(feature = "serde1")]
+extern crate serde;
+
+#[cfg(feature = "serde1")]
+#[macro_use]
+extern crate serde_derive;
 
 use rand_core::{RngCore, SeedableRng};
 
@@ -141,6 +146,8 @@ use num_traits::{One, Zero};
 use numops::*;
 use outputmix::{OutputMixin, XshRrMixin, XshRsMixin};
 use seeds::PcgSeeder;
+#[cfg(feature = "serde1")]
+use serde::{Deserialize, Serialize};
 use stream::{NoSeqStream, OneSeqStream, SpecificSeqStream, Stream, UniqueSeqStream};
 
 use std::marker::PhantomData;
@@ -149,6 +156,7 @@ use std::marker::PhantomData;
 ///
 /// This structure allows the building of many types of PCG generators by using various
 /// Mixins for both the stream, multiplier, and permutation function.
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct PcgEngine<
     Itype,
     Xtype,
@@ -269,27 +277,37 @@ pub type Pcg32Unique = UniqueXshRr6432;
 /// compiler can optimize and reduce the number of operations.
 pub type Pcg32Fast = McgXshRs6432;
 
+#[cfg(feature = "u128")]
 pub type OneseqXshRs12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type OneseqXshRr12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
 pub type UniqueXshRs12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type UniqueXshRr12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
 pub type SetseqXshRs12832 =
     PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type SetseqXshRr12832 =
     PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
 pub type McgXshRs12832 = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type McgXshRr12832 = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRrMixin>;
 
 /// A helper definition for a simple 32bit PCG which can have multiple random streams. This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period. (In testing
 /// it appears to be better to use an extended generator Pcg32Ext to get a long
 /// period rather than the Pcg32L)
+#[cfg(feature = "u128")]
 pub type Pcg32L = SetseqXshRr12832;
 /// A helper definition for a 32bit PCG which hase a fixed good random streamThis version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
+#[cfg(feature = "u128")]
 pub type Pcg32LOneseq = OneseqXshRr12832;
 /// A helper definition for a 32bit PCG which has a unique random stream for each instanceThis version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
+#[cfg(feature = "u128")]
 pub type Pcg32LUnique = UniqueXshRr12832;
 /// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
 ///
@@ -297,30 +315,43 @@ pub type Pcg32LUnique = UniqueXshRr12832;
 /// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
 /// compiler can optimize and reduce the number of operations.This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
+#[cfg(feature = "u128")]
 pub type Pcg32LFast = McgXshRs12832;
 
+#[cfg(feature = "u128")]
 pub type OneseqXshRs12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type OneseqXshRr12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
 pub type UniqueXshRs12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type UniqueXshRr12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
 pub type SetseqXshRs12864 =
     PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type SetseqXshRr12864 =
     PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
 pub type McgXshRs12864 = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRsMixin>;
+#[cfg(feature = "u128")]
 pub type McgXshRr12864 = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRrMixin>;
 
 /// A helper definition for a simple 64bit PCG which can have multiple random streams
+#[cfg(feature = "u128")]
 pub type Pcg64 = SetseqXshRr12864;
 /// A helper definition for a 64bit PCG which hase a fixed good random stream
+#[cfg(feature = "u128")]
 pub type Pcg64Oneseq = OneseqXshRr12864;
 /// A helper definition for a 64bit PCG which has a unique random stream for each instance
+#[cfg(feature = "u128")]
 pub type Pcg64Unique = UniqueXshRr12864;
 /// A helper definition for a 64bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
 /// generator instead of a LCG. Additionally it uses a simpler permutation function so that the
 /// compiler can optimize and reduce the number of operations.
+#[cfg(feature = "u128")]
 pub type Pcg64Fast = McgXshRs12864;
 
 //

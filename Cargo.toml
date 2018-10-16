@@ -1,6 +1,6 @@
 [package]
 name = "pcg_rand"
-version = "0.9.1"
+version = "0.9.3"
 authors = ["Jeb Brooks <robojeb@robojeb.xyz>"]
 
 homepage = "https://github.com/robojeb/pcg_rand"
@@ -18,12 +18,20 @@ description = "An implementation of the PCG family of random number generators i
 [badges]
 maintenance = { status = "passively-maintained" }
 
+[features]
+default = ["u128"]
+serde1 = ["serde", "serde_derive", "serde_json"]
+u128 = ["rand/i128_support", "num-traits/i128"]
+
 [lib]
 name = "pcg_rand"
 path = "src/lib.rs"
 
 [dependencies]
-rand = { version="0.5.4", features=["i128_support"]}
+rand = { version="0.5.4"}
 rand_core = "0.2.1"
-num-traits = { version="0.2.5", features=["i128"]}
+num-traits = { version="0.2.5"}
 byteorder = "1.2.4"
+serde = { version = "1", optional = true}
+serde_derive = { version = "1", optional = true}
+serde_json = { version="1", optional = true}

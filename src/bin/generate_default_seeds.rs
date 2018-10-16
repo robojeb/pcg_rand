@@ -20,12 +20,19 @@
 extern crate pcg_rand;
 extern crate rand;
 
+#[cfg(not(feature = "u128"))]
+use pcg_rand::Pcg32;
+#[cfg(feature = "u128")]
 use pcg_rand::Pcg64;
 use rand::{FromEntropy, Rng};
 
 #[cfg(not(test))]
 fn main() {
+    #[cfg(feature = "u128")]
     let mut seeds: Pcg64 = Pcg64::from_entropy();
+    #[cfg(not(feature = "u128"))]
+    let mut seeds: Pcg32 = Pcg32::from_entropy();
+    #[cfg(feature = "u128")]
     println!(
         "u128: 0x{:X} 0x{:X}",
         seeds.gen::<u128>(),

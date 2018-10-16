@@ -3,13 +3,13 @@ pcg_rand
 
 [![Crates.io Version](https://img.shields.io/crates/v/pcg_rand.svg)](https://crates.io/crates/pcg_rand)
 [![](https://docs.rs/pcg_rand/badge.svg)](https://docs.rs/pcg_rand/)
-![License](https://img.shields.io/crates/l/pcg_rand.svg)
+[![License](https://img.shields.io/crates/l/pcg_rand.svg)](https://github.com/robojeb/pcg_rand/blob/master/LICENSE)
 [![](https://img.shields.io/badge/rust-1.26%2B-blue.svg)](https://github.com/robojeb/pcg_rand)
 
 To use this library add the following to your `Cargo.toml`
 
 ```
-pcg_rand = "0.9.1"
+pcg_rand = "0.9.3"
 ```
 
 PCG stands for Permuted Congruential generators. They are a simple family of
@@ -52,3 +52,6 @@ Changes
  it can be useful for testing. Improved the docs to suggest seeding and updated
  the documentation examples to use `from_entropy` instead of `new_unseeded` to 
  promote good use of the generators. 
+* (10/15/2018): Added cargo features for `u128` and experimental `serde1` 
+ support. Also fixed an issue in `0.9.2` which caused it to be nightly only 
+ (oops). Started migrating benchmarks to critereon. 

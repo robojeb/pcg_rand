@@ -36,6 +36,7 @@ pub trait OutputMixin<Itype, Xtype> {
 }
 
 /// This output uses an Xor-shift followed by a right shift
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct XshRsMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
@@ -84,6 +85,7 @@ where
 }
 
 /// This output uses an xor-shift followed by a random rotation.
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct XshRrMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin

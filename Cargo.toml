@@ -17,6 +17,7 @@ description = "An implementation of the PCG family of random number generators i
 
 [badges]
 maintenance = { status = "passively-maintained" }
+travis-ci = { repository = "robojeb/pcg_rand" }
 
 [features]
 default = ["u128"]

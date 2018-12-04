@@ -3,15 +3,15 @@ extern crate rand;
 
 use pcg_rand::seeds::PcgSeeder;
 use pcg_rand::Pcg32Basic;
-use rand::{Rng, SeedableRng};
+use rand::{distributions::Alphanumeric, Rng, SeedableRng};
 
 #[test]
 fn pcg_basic_unseeded() {
     let mut ra: Pcg32Basic = Pcg32Basic::new_unseeded();
     let mut rb: Pcg32Basic = Pcg32Basic::new_unseeded();
     assert_eq!(
-        ra.gen_ascii_chars().take(100).collect::<Vec<_>>(),
-        rb.gen_ascii_chars().take(100).collect::<Vec<_>>()
+        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>(),
+        rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
     );
 }
 
@@ -20,8 +20,8 @@ fn pcg_basic_seed_match() {
     let mut ra: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 12));
     let mut rb: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 12));
     assert_eq!(
-        ra.gen_ascii_chars().take(100).collect::<Vec<_>>(),
-        rb.gen_ascii_chars().take(100).collect::<Vec<_>>()
+        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>(),
+        rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
     );
 }
 
@@ -33,8 +33,8 @@ fn pcg_basic_seq_diff() {
     let mut ra: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 12));
     let mut rb: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 14));
     assert!(
-        ra.gen_ascii_chars().take(100).collect::<Vec<_>>()
-            != rb.gen_ascii_chars().take(100).collect::<Vec<_>>()
+        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
+            != rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
     );
 }
 
@@ -49,8 +49,8 @@ fn pcg_basic_seq_aliasing() {
     let mut ra: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 12));
     let mut rb: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 13));
     assert!(
-        ra.gen_ascii_chars().take(100).collect::<Vec<_>>()
-            != rb.gen_ascii_chars().take(100).collect::<Vec<_>>()
+        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
+            != rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
     );
 }
 
@@ -61,7 +61,7 @@ fn pcg_basic_seed_diff() {
     let mut ra: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(11, 11));
     let mut rb: Pcg32Basic = SeedableRng::from_seed(PcgSeeder::seed_with_stream(12, 11));
     assert!(
-        ra.gen_ascii_chars().take(100).collect::<Vec<_>>()
-            != rb.gen_ascii_chars().take(100).collect::<Vec<_>>()
+        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
+            != rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
     );
 }

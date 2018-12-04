@@ -9,7 +9,7 @@ pcg_rand
 To use this library add the following to your `Cargo.toml`
 
 ```
-pcg_rand = "0.9.3"
+pcg_rand = "0.10.0"
 ```
 
 PCG stands for Permuted Congruential generators. They are a simple family of
@@ -55,3 +55,6 @@ Changes
 * (10/15/2018): Added cargo features for `u128` and experimental `serde1` 
  support. Also fixed an issue in `0.9.2` which caused it to be nightly only 
  (oops). Started migrating benchmarks to critereon. 
+* (12/4/2018): Upgraded to `rand 0.6` and `rand_core 0.3`. Fixed an issue where 
+ tests wouldn't run if there was no `u128` support. Serde support is still 
+ highly experimental. 

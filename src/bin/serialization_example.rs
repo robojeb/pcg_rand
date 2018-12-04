@@ -23,7 +23,10 @@ extern crate rand;
 #[cfg(feature = "serde1")]
 extern crate serde_json;
 
+#[cfg(feature = "serde1")]
 use pcg_rand::{Pcg32, Pcg32Oneseq};
+
+#[cfg(feature = "serde1")]
 use rand::{FromEntropy, Rng};
 
 #[cfg(all(not(test), feature = "serde1"))]

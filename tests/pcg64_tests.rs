@@ -1,3 +1,4 @@
+#![cfg(feature = "u128")]
 extern crate pcg_rand;
 extern crate rand;
 

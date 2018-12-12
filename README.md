@@ -10,7 +10,7 @@ pcg_rand
 To use this library add the following to your `Cargo.toml`
 
 ```
-pcg_rand = "0.10.0"
+pcg_rand = "0.10.1"
 ```
 
 PCG stands for Permuted Congruential generators. They are a simple family of
@@ -59,3 +59,4 @@ Changes
 * (12/4/2018): Upgraded to `rand 0.6` and `rand_core 0.3`. Fixed an issue where 
  tests wouldn't run if there was no `u128` support. Serde support is still 
  highly experimental. 
+* (12/12/2018): Bump to 0.10.1 to include the automated build badge on crates.io

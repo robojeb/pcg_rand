@@ -5,7 +5,7 @@ pcg_rand
 [![](https://docs.rs/pcg_rand/badge.svg)](https://docs.rs/pcg_rand/)
 [![Build Status](https://travis-ci.com/robojeb/pcg_rand.svg?branch=master)](https://travis-ci.com/robojeb/pcg_rand)
 [![License](https://img.shields.io/crates/l/pcg_rand.svg)](https://github.com/robojeb/pcg_rand/blob/master/LICENSE)
-[![](https://img.shields.io/badge/rust-1.26%2B-blue.svg)](https://github.com/robojeb/pcg_rand)
+[![](https://img.shields.io/badge/rust-1.32%2B-blue.svg)](https://github.com/robojeb/pcg_rand)
 
 To use this library add the following to your `Cargo.toml`
 

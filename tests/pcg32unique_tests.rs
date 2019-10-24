@@ -13,8 +13,8 @@ fn pcg32_unique_unseeded() {
     let mut ra: Pcg32Unique = Pcg32Unique::new_unseeded();
     let mut rb: Pcg32Unique = Pcg32Unique::new_unseeded();
     //Because these are unique these should not match
-    assert_eq!(
-        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>(),
+    assert!(
+        ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>() !=
         rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
     );
 }
@@ -27,8 +27,8 @@ fn pcg32_unique_seed_match() {
         let mut ra: Pcg32Unique = SeedableRng::from_seed(s.clone());
         let mut rb: Pcg32Unique = SeedableRng::from_seed(s);
         //Because these are unique these should not match
-        assert_eq!(
-            ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>(),
+        assert!(
+            ra.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>() !=
             rb.sample_iter(&Alphanumeric).take(100).collect::<Vec<_>>()
         );
     }

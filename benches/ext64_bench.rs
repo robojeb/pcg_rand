@@ -6,7 +6,7 @@ extern crate test;
 
 use pcg_rand::extension::extsizes::*;
 use pcg_rand::extension::Pcg64Ext;
-use rand::{FromEntropy, RngCore};
+use rand::{SeedableRng, RngCore};
 use test::Bencher;
 
 #[bench]

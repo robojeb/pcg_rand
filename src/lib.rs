@@ -89,7 +89,7 @@
 //! extern crate pcg_rand;
 //! extern crate rand;
 //!
-//! use rand::{Rng, FromEntropy};
+//! use rand::{Rng, SeedableRng};
 //! use pcg_rand::Pcg32;
 //!
 //! fn main() {
@@ -110,7 +110,7 @@
 //!     Pcg32Unique,
 //!     extension::{Pcg32Ext, ExtPcg, Ext256}
 //! };
-//! use rand::FromEntropy;
+//! use rand::SeedableRng;
 //!
 //! //Create an extended generator explicitly
 //! let ext1 = Pcg32Ext::<Ext256>::from_entropy();

@@ -23,7 +23,7 @@ extern crate rand;
 use pcg_rand::{seeds::PcgSeeder, Pcg32, Pcg32Basic, Pcg32Unique};
 #[cfg(feature = "u128")]
 use pcg_rand::{Pcg32L, Pcg64};
-use rand::{FromEntropy, Rng, SeedableRng};
+use rand::{Rng, SeedableRng};
 
 #[cfg(not(test))]
 fn main() {

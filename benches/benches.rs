@@ -6,7 +6,7 @@ extern crate rand_core;
 extern crate test;
 
 use pcg_rand::Pcg32Basic;
-use rand::{prng::Hc128Rng, FromEntropy, XorShiftRng};
+use rand::{SeedableRng, rngs::{StdRng}};
 use rand_core::RngCore;
 use test::Bencher;
 
@@ -28,35 +28,35 @@ fn pcg32basic_fill_bytes(b: &mut Bencher) {
 }
 
 #[bench]
-fn xorshift_next_u32(b: &mut Bencher) {
-    let mut rng = XorShiftRng::from_entropy();
+fn stdrng_next_u32(b: &mut Bencher) {
+    let mut rng = StdRng::from_entropy();
 
     b.iter(|| rng.next_u32())
 }
 
 #[bench]
-fn xorshift_fill_bytes(b: &mut Bencher) {
+fn stdrng_fill_bytes(b: &mut Bencher) {
     b.bytes = 1024 * 1024;
-    let mut rng = XorShiftRng::from_entropy();
+    let mut rng = StdRng::from_entropy();
 
     let mut x = vec![0; b.bytes as usize];
 
     b.iter(|| rng.fill_bytes(x.as_mut_slice()))
 }
 
-#[bench]
-fn hc128_next_u32(b: &mut Bencher) {
-    let mut rng = Hc128Rng::from_entropy();
+// #[bench]
+// fn smallrng_next_u32(b: &mut Bencher) {
+//     let mut rng = SmallRng::from_entropy();
 
-    b.iter(|| rng.next_u32())
-}
+//     b.iter(|| rng.next_u32())
+// }
 
-#[bench]
-fn hc128_fill_bytes(b: &mut Bencher) {
-    b.bytes = 1024 * 1024;
-    let mut rng = Hc128Rng::from_entropy();
+// #[bench]
+// fn smallrng_fill_bytes(b: &mut Bencher) {
+//     b.bytes = 1024 * 1024;
+//     let mut rng = SmallRng::from_entropy();
 
-    let mut x = vec![0; b.bytes as usize];
+//     let mut x = vec![0; b.bytes as usize];
 
-    b.iter(|| rng.fill_bytes(x.as_mut_slice()))
-}
+//     b.iter(|| rng.fill_bytes(x.as_mut_slice()))
+// }

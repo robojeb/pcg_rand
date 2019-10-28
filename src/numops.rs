@@ -93,26 +93,18 @@ macro_rules! smaller {
 }
 
 smaller!(
+    u128, u128;
     u128, u64;
     u128, u32;
     u128, u16;
     u128, u8;
+    u64, u64;
     u64, u32;
     u64, u16;
     u64, u8;
+    u32, u32;
     u32, u16;
     u32, u8;
+    u16, u16;
     u16, u8
 );
-
-// impl PcgOps for u128 {
-//     #[inline]
-//     fn wrap_mul(&self, rhs : u128) -> u128 {
-//         self.wrapping_mul(rhs)
-//     }
-
-//     #[inline]
-//     fn wrap_add(&self, rhs : u128) -> u128 {
-//         self.wrapping_add(rhs)
-//     }
-// }

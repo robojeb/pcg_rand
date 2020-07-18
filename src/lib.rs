@@ -49,7 +49,7 @@
 //! [dependencies]
 //! pcg_rand = "0.11.1"
 //! ```
-//! #Typename Nomenclature
+//! # Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy
 //! types for use. The following attempts to help you decode these typenames
 //!
@@ -81,7 +81,7 @@
 //! * `Rr`: Refers to a random rotation. Randomly rotates based on entropy from the state.
 //! * `Rs`: Refers to a random shift. Randomly shifts based on entropy from the state.
 //!
-//! #How to Use
+//! # How to Use
 //! The simple generators work like the other Rng's from the `rand` crate.
 //! You can create a PCG as follows
 //!

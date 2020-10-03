@@ -189,6 +189,20 @@ where
     }
 }
 
+impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>
+where
+    Itype: Zero + Copy,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
+    OutMix: OutputMixin<Itype, Xtype>,
+    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: SeedableRng,
+{
+    /// Gets the current state of the PCG Engine
+    pub fn get_state(&self) -> [Itype; 2] {
+        [self.state, self.stream_mix.increment()]
+    }
+}
+
 //Provide random for 32 bit generators
 impl<Itype, StreamMix, MulMix, OutMix> RngCore for PcgEngine<Itype, u32, StreamMix, MulMix, OutMix>
 where

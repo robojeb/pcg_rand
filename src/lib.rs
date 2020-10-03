@@ -301,11 +301,11 @@ pub type McgXshRr12832 = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRrM
 /// period rather than the Pcg32L)
 #[cfg(feature = "u128")]
 pub type Pcg32L = SetseqXshRr12832;
-/// A helper definition for a 32bit PCG which hase a fixed good random streamThis version uses 128bits of internal state
+/// A helper definition for a 32bit PCG which hase a fixed good random stream. This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
 #[cfg(feature = "u128")]
 pub type Pcg32LOneseq = OneseqXshRr12832;
-/// A helper definition for a 32bit PCG which has a unique random stream for each instanceThis version uses 128bits of internal state
+/// A helper definition for a 32bit PCG which has a unique random stream for each instance. This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
 #[cfg(feature = "u128")]
 pub type Pcg32LUnique = UniqueXshRr12832;

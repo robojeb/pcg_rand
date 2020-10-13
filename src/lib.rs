@@ -212,7 +212,7 @@ where
     pub fn restore_state_with_no_verification(state: PCGStateInfo<Itype>) -> Self {
         PcgEngine {
             state: state.state,
-            stream_mix: StreamMix::build(None), // FIXME
+            stream_mix: StreamMix::build(Some(state.increment)),
             mul_mix: PhantomData,
             out_mix: PhantomData,
             phantom: PhantomData,

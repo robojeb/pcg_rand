@@ -69,10 +69,9 @@ Changes
  to deserialize into a `SetSeq` type so it is the only one which supports
  deserialization. The serialization step writes out the internal state as
  an array and does not record any information about the type of generator. 
- * (10/*/2020): Added the DXsM output and made it the default (this is the 
+ * (10/12/2020): Added the DXsM output and made it the default (this is the 
  specified intention of the C++ library author). Re-worked serialization to 
  create a definition structure which contains all the information needed to
  verify that the PCG you are serializing into/out-of is compatible with the 
  stored information. This can be disabled with the `no_deserialize_verify` 
- feature. Also re-worked seeds to be an array of bits with a helper function
- which lets you define the sequence and increment more naturally. 
+ feature. 

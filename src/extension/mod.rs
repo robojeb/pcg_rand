@@ -147,7 +147,11 @@ where
 
         let ext_val = self.ext[pick];
         self.ext[pick] += 1;
-        OutMix::output(oldstate) ^ ext_val
+        OutMix::output(
+            oldstate,
+            self.pcg.stream_mix.increment(),
+            MulMix::multiplier(),
+        ) ^ ext_val
     }
 
     fn next_u64(&mut self) -> u64 {
@@ -190,7 +194,11 @@ where
 
         let ext_val = self.ext[pick];
         self.ext[pick] += 1;
-        OutMix::output(oldstate) ^ ext_val
+        OutMix::output(
+            oldstate,
+            self.pcg.stream_mix.increment(),
+            MulMix::multiplier(),
+        ) ^ ext_val
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {

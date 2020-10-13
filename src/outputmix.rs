@@ -24,19 +24,19 @@
  *     http://www.pcg-random.org
  */
 
-use num_traits::PrimInt;
+use num_traits::{One, PrimInt};
 use numops::*;
-use std::ops::{BitXor, Shr};
+use std::ops::{BitOr, BitXor, Shr};
 
 /// The output mixin trait provides the permutation function for the output
 /// of the PCG. After the LCG state is advanced the state is run through
 /// the `output(...)` function to produce the output.
 pub trait OutputMixin<Itype, Xtype> {
-    fn output(state: Itype) -> Xtype;
+    const SERIALIZER_ID: &'static str;
+    fn output(state: Itype, increment: Itype, multiplier: Itype) -> Xtype;
 }
 
 /// This output uses an Xor-shift followed by a right shift
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct XshRsMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRsMixin
@@ -49,8 +49,9 @@ where
         + Copy,
     Xtype: BitSize,
 {
+    const SERIALIZER_ID: &'static str = "XshRs";
     #[inline(always)]
-    fn output(state: Itype) -> Xtype {
+    fn output(state: Itype, _increment: Itype, _multiplier: Itype) -> Xtype {
         let mut state = state;
         let sparebits = Itype::BITS - Xtype::BITS;
 
@@ -85,7 +86,6 @@ where
 }
 
 /// This output uses an xor-shift followed by a random rotation.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct XshRrMixin;
 
 impl<Itype, Xtype> OutputMixin<Itype, Xtype> for XshRrMixin
@@ -98,8 +98,9 @@ where
         + Copy,
     Xtype: BitSize + PrimInt,
 {
+    const SERIALIZER_ID: &'static str = "XshRr";
     #[inline(always)]
-    fn output(state: Itype) -> Xtype {
+    fn output(state: Itype, _increment: Itype, _multiplier: Itype) -> Xtype {
         let mut state = state;
 
         let sparebits = Itype::BITS - Xtype::BITS;
@@ -139,5 +140,37 @@ where
 
         let result: Xtype = (state >> bottomspare).shrink();
         result.rotate_right(amprot as u32)
+    }
+}
+
+/// The Double Xor-shift multiply output
+/// This is a new (added to the PCG C++ library in 2019) output which is meant to be more powerful.
+pub struct DXsMMixin;
+
+impl<Itype, Xtype> OutputMixin<Itype, Xtype> for DXsMMixin
+where
+    Itype: AsSmaller<Xtype> + Shr<usize, Output = Itype> + BitSize + Copy,
+    Xtype: BitSize
+        + PcgOps
+        + Shr<usize, Output = Xtype>
+        + BitXor<Xtype, Output = Xtype>
+        + BitOr<Xtype, Output = Xtype>
+        + One
+        + Copy,
+{
+    const SERIALIZER_ID: &'static str = "DXsM";
+    #[inline(always)]
+    fn output(state: Itype, _increment: Itype, multiplier: Itype) -> Xtype {
+        let hi: Xtype = (state >> (Itype::BITS - Xtype::BITS)).shrink();
+        let low: Xtype = state.shrink();
+
+        let low = low | Xtype::one();
+        let hi = hi ^ (hi >> (Xtype::BITS / 2));
+
+        let hi = hi.wrap_mul(multiplier.shrink());
+
+        let hi = hi ^ (hi >> (3 * Xtype::BITS / 4));
+
+        hi.wrap_mul(low)
     }
 }

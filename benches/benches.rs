@@ -6,7 +6,7 @@ extern crate rand_core;
 extern crate test;
 
 use pcg_rand::Pcg32Basic;
-use rand::{SeedableRng, rngs::{StdRng}};
+use rand::{rngs::StdRng, SeedableRng};
 use rand_core::RngCore;
 use test::Bencher;
 

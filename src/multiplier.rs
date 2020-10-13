@@ -33,7 +33,6 @@ pub trait Multiplier<Itype> {
 
 /// Provides a default "good" multiplier based on the multiplier provided
 /// in the C++ implementation of PCG
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct DefaultMultiplier;
 
 macro_rules! make_default_mul {
@@ -58,7 +57,6 @@ make_default_mul!(
 
 /// Provides a default "good" multiplier based on the multiplier provided
 /// in the C++ implementation of PCG for the MCG variant of the PCG generator.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct McgMultiplier;
 
 macro_rules! make_mcg_mul {

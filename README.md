@@ -10,7 +10,7 @@ pcg_rand
 To use this library add the following to your `Cargo.toml`
 
 ```
-pcg_rand = "0.11.1"
+pcg_rand = "0.12.0"
 ```
 
 PCG stands for Permuted Congruential generators. They are a simple family of
@@ -63,3 +63,16 @@ Changes
 * (10/24/2019): Bump to 0.11.0 to use `rand 0.7` and `rand_core 0.5`
 * (10/28/2019): Bump to 0.11.1. Added the ability to make generators output a 
  a permutation of their entire internal state. 
+* (10/02/2020): Update to 0.12.0. Added the ability to extract the internal 
+ state of the generator. Moved the examples from `bin` to `examples` for 
+ better discovery. Changed the serialization derivation, it only makes sense 
+ to deserialize into a `SetSeq` type so it is the only one which supports
+ deserialization. The serialization step writes out the internal state as
+ an array and does not record any information about the type of generator. 
+ * (10/*/2020): Added the DXsM output and made it the default (this is the 
+ specified intention of the C++ library author). Re-worked serialization to 
+ create a definition structure which contains all the information needed to
+ verify that the PCG you are serializing into/out-of is compatible with the 
+ stored information. This can be disabled with the `no_deserialize_verify` 
+ feature. Also re-worked seeds to be an array of bits with a helper function
+ which lets you define the sequence and increment more naturally. 

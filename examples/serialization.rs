@@ -17,29 +17,30 @@
  *
  */
 
- extern crate pcg_rand;
- extern crate rand;
- 
- #[cfg(feature = "serde1")]
- extern crate serde_json;
- 
- #[cfg(feature = "serde1")]
- use pcg_rand::{Pcg32, Pcg32Oneseq};
- 
- #[cfg(feature = "serde1")]
- use rand::{SeedableRng, Rng};
- 
- #[cfg(all(not(test), feature = "serde1"))]
- fn main() {
-     let a: Pcg32 = Pcg32::from_entropy();
-     let b: Pcg32Oneseq = Pcg32Oneseq::from_entropy();
- 
-     println!("{:?}", serde_json::to_string(&a));
-     println!("{:?}", serde_json::to_string(&b));
- }
- 
- #[cfg(not(feature = "serde1"))]
- fn main() {
-     println!("Please enable the `serde1` feature")
- }
- 
+extern crate pcg_rand;
+extern crate rand;
+
+#[cfg(feature = "serde1")]
+extern crate serde_json;
+
+#[cfg(feature = "serde1")]
+use pcg_rand::{Pcg32, Pcg32Oneseq, Pcg32Unique};
+
+#[cfg(feature = "serde1")]
+use rand::SeedableRng;
+
+#[cfg(all(not(test), feature = "serde1"))]
+fn main() {
+    let a: Pcg32 = Pcg32::from_entropy();
+    let b: Pcg32Oneseq = Pcg32Oneseq::from_entropy();
+    let c: Pcg32Unique = Pcg32Unique::from_entropy();
+
+    println!("{:?}", serde_json::to_string(&a));
+    println!("{:?}", serde_json::to_string(&b));
+    println!("{:?}", serde_json::to_string(&c));
+}
+
+#[cfg(not(feature = "serde1"))]
+fn main() {
+    println!("Please enable the `serde1` feature")
+}

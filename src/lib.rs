@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pcg_rand = "0.11.1"
+//! pcg_rand = "0.12.0"
 //! ```
 //! # Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy
@@ -80,6 +80,7 @@
 //! * `Xsh`: Refers to a High Xorshift function.
 //! * `Rr`: Refers to a random rotation. Randomly rotates based on entropy from the state.
 //! * `Rs`: Refers to a random shift. Randomly shifts based on entropy from the state.
+//! * 'DXsM`: Refers to the Double-Xorshift and Multiply output
 //!
 //! # How to Use
 //! The simple generators work like the other Rng's from the `rand` crate.
@@ -126,10 +127,6 @@ extern crate rand_core;
 #[cfg(feature = "serde1")]
 extern crate serde;
 
-#[cfg(feature = "serde1")]
-#[macro_use]
-extern crate serde_derive;
-
 use rand_core::{RngCore, SeedableRng};
 
 use std::num::Wrapping;
@@ -141,13 +138,17 @@ pub mod outputmix;
 pub mod seeds;
 pub mod stream;
 
+#[cfg(feature = "serde1")]
+pub mod serialization;
+
+#[cfg(feature = "serde1")]
+use serde::{Deserialize, Serialize};
+
 use multiplier::{DefaultMultiplier, McgMultiplier, Multiplier};
 use num_traits::{One, Zero};
 use numops::*;
-use outputmix::{OutputMixin, XshRrMixin, XshRsMixin};
+use outputmix::{DXsMMixin, OutputMixin, XshRrMixin, XshRsMixin};
 use seeds::PcgSeeder;
-#[cfg(feature = "serde1")]
-use serde::{Deserialize, Serialize};
 use stream::{NoSeqStream, OneSeqStream, SpecificSeqStream, Stream, UniqueSeqStream};
 
 use std::marker::PhantomData;
@@ -156,7 +157,6 @@ use std::marker::PhantomData;
 ///
 /// This structure allows the building of many types of PCG generators by using various
 /// Mixins for both the stream, multiplier, and permutation function.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct PcgEngine<
     Itype,
     Xtype,
@@ -191,15 +191,71 @@ where
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>
 where
-    Itype: Zero + Copy,
+    Itype: Copy + BitSize,
+    Xtype: BitSize,
     StreamMix: Stream<Itype>,
     MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, Xtype>,
-    PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>: SeedableRng,
 {
     /// Gets the current state of the PCG Engine
-    pub fn get_state(&self) -> [Itype; 2] {
-        [self.state, self.stream_mix.increment()]
+    pub fn get_state(&self) -> PCGStateInfo<Itype> {
+        PCGStateInfo {
+            state: self.state,
+            increment: self.stream_mix.increment(),
+            multiplier: MulMix::multiplier(),
+            internal_width: Itype::BITS,
+            output_width: Xtype::BITS,
+            output_mixin: OutMix::SERIALIZER_ID.into(),
+        }
+    }
+
+    pub fn restore_state_with_no_verification(state: PCGStateInfo<Itype>) -> Self {
+        PcgEngine {
+            state: state.state,
+            stream_mix: StreamMix::build(None), // FIXME
+            mul_mix: PhantomData,
+            out_mix: PhantomData,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<Itype, Xtype, MulMix, OutMix> PcgEngine<Itype, Xtype, SpecificSeqStream<Itype>, MulMix, OutMix>
+where
+    Itype: Copy + Eq + Zero + BitSize,
+    SpecificSeqStream<Itype>: Stream<Itype>,
+    Xtype: BitSize,
+    MulMix: Multiplier<Itype>,
+    OutMix: OutputMixin<Itype, Xtype>,
+{
+    // Restores a PCG from a given state and verifies that all the parameters match the recorded state
+    pub fn restore_state(state: PCGStateInfo<Itype>) -> Result<Self, String> {
+        if OutMix::SERIALIZER_ID != state.output_mixin {
+            return Err("Output Mixin type does not match recorded state".into());
+        }
+
+        if MulMix::multiplier() != state.multiplier {
+            return Err("PCG using different multiplier than recorded state".into());
+        }
+
+        if Xtype::BITS != state.output_width {
+            return Err("PCG uses different output size than recorded state".into());
+        }
+
+        if Itype::BITS != state.internal_width {
+            return Err("PCG uses different internal size than recorded state".into());
+        }
+
+        let mut stream = SpecificSeqStream::new();
+        stream.set_stream(state.increment);
+
+        Ok(PcgEngine {
+            state: state.state,
+            stream_mix: stream,
+            mul_mix: PhantomData,
+            out_mix: PhantomData,
+            phantom: PhantomData,
+        })
     }
 }
 
@@ -218,7 +274,7 @@ where
             .increment()
             .wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
 
-        OutMix::output(oldstate)
+        OutMix::output(oldstate, self.stream_mix.increment(), MulMix::multiplier())
     }
 
     fn next_u64(&mut self) -> u64 {
@@ -254,7 +310,7 @@ where
             .increment()
             .wrap_add(oldstate.wrap_mul(MulMix::multiplier()));
 
-        OutMix::output(oldstate)
+        OutMix::output(oldstate, self.stream_mix.increment(), MulMix::multiplier())
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
@@ -269,21 +325,25 @@ where
 
 pub type OneseqXshRs6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type OneseqXshRr6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type OneseqDXsM6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, DXsMMixin>;
 pub type UniqueXshRs6432 = PcgEngine<u64, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type UniqueXshRr6432 = PcgEngine<u64, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
+pub type UniqueDXsM6432 = PcgEngine<u64, u32, UniqueSeqStream, DefaultMultiplier, DXsMMixin>;
 pub type SetseqXshRs6432 =
     PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRsMixin>;
 pub type SetseqXshRr6432 =
     PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, XshRrMixin>;
+pub type SetseqDXsM6432 = PcgEngine<u64, u32, SpecificSeqStream<u64>, DefaultMultiplier, DXsMMixin>;
 pub type McgXshRs6432 = PcgEngine<u64, u32, NoSeqStream, McgMultiplier, XshRsMixin>;
 pub type McgXshRr6432 = PcgEngine<u64, u32, NoSeqStream, McgMultiplier, XshRrMixin>;
+pub type McgDXsM6432 = PcgEngine<u64, u32, NoSeqStream, McgMultiplier, DXsMMixin>;
 
 /// A helper definition for a simple 32bit PCG which can have multiple random streams
-pub type Pcg32 = SetseqXshRr6432;
+pub type Pcg32 = SetseqDXsM6432;
 /// A helper definition for a 32bit PCG which hase a fixed good random stream
-pub type Pcg32Oneseq = OneseqXshRr6432;
+pub type Pcg32Oneseq = OneseqDXsM6432;
 /// A helper definition for a 32bit PCG which has a unique random stream for each instance
-pub type Pcg32Unique = UniqueXshRr6432;
+pub type Pcg32Unique = UniqueDXsM6432;
 /// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
@@ -296,33 +356,43 @@ pub type OneseqXshRs12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier
 #[cfg(feature = "u128")]
 pub type OneseqXshRr12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
 #[cfg(feature = "u128")]
+pub type OneseqDXsM12832 = PcgEngine<u128, u32, OneSeqStream, DefaultMultiplier, DXsMMixin>;
+#[cfg(feature = "u128")]
 pub type UniqueXshRs12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
 #[cfg(feature = "u128")]
 pub type UniqueXshRr12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
+pub type UniqueDXsM12832 = PcgEngine<u128, u32, UniqueSeqStream, DefaultMultiplier, DXsMMixin>;
 #[cfg(feature = "u128")]
 pub type SetseqXshRs12832 =
     PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
 #[cfg(feature = "u128")]
 pub type SetseqXshRr12832 =
     PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
+pub type SetseqDXsM12832 =
+    PcgEngine<u128, u32, SpecificSeqStream<u128>, DefaultMultiplier, DXsMMixin>;
+#[cfg(feature = "u128")]
 pub type McgXshRs12832 = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRsMixin>;
 #[cfg(feature = "u128")]
 pub type McgXshRr12832 = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
+pub type McgDXsM12832 = PcgEngine<u128, u32, NoSeqStream, McgMultiplier, DXsMMixin>;
 
 /// A helper definition for a simple 32bit PCG which can have multiple random streams. This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period. (In testing
 /// it appears to be better to use an extended generator Pcg32Ext to get a long
 /// period rather than the Pcg32L)
 #[cfg(feature = "u128")]
-pub type Pcg32L = SetseqXshRr12832;
+pub type Pcg32L = SetseqDXsM12832;
 /// A helper definition for a 32bit PCG which hase a fixed good random stream. This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
 #[cfg(feature = "u128")]
-pub type Pcg32LOneseq = OneseqXshRr12832;
+pub type Pcg32LOneseq = OneseqDXsM12832;
 /// A helper definition for a 32bit PCG which has a unique random stream for each instance. This version uses 128bits of internal state
 /// This makes it potentially slower but it has a longer period.
 #[cfg(feature = "u128")]
-pub type Pcg32LUnique = UniqueXshRr12832;
+pub type Pcg32LUnique = UniqueDXsM12832;
 /// A helper definition for a 32bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
@@ -337,9 +407,13 @@ pub type OneseqXshRs12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier
 #[cfg(feature = "u128")]
 pub type OneseqXshRr12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, XshRrMixin>;
 #[cfg(feature = "u128")]
+pub type OneseqDXsM12864 = PcgEngine<u128, u64, OneSeqStream, DefaultMultiplier, DXsMMixin>;
+#[cfg(feature = "u128")]
 pub type UniqueXshRs12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, XshRsMixin>;
 #[cfg(feature = "u128")]
 pub type UniqueXshRr12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
+pub type UniqueDXsM12864 = PcgEngine<u128, u64, UniqueSeqStream, DefaultMultiplier, DXsMMixin>;
 #[cfg(feature = "u128")]
 pub type SetseqXshRs12864 =
     PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRsMixin>;
@@ -347,19 +421,24 @@ pub type SetseqXshRs12864 =
 pub type SetseqXshRr12864 =
     PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, XshRrMixin>;
 #[cfg(feature = "u128")]
+pub type SetseqDXsM12864 =
+    PcgEngine<u128, u64, SpecificSeqStream<u128>, DefaultMultiplier, DXsMMixin>;
+#[cfg(feature = "u128")]
 pub type McgXshRs12864 = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRsMixin>;
 #[cfg(feature = "u128")]
 pub type McgXshRr12864 = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, XshRrMixin>;
+#[cfg(feature = "u128")]
+pub type McgDXsM12864 = PcgEngine<u128, u64, NoSeqStream, McgMultiplier, DXsMMixin>;
 
 /// A helper definition for a simple 64bit PCG which can have multiple random streams
 #[cfg(feature = "u128")]
-pub type Pcg64 = SetseqXshRr12864;
+pub type Pcg64 = SetseqDXsM12864;
 /// A helper definition for a 64bit PCG which hase a fixed good random stream
 #[cfg(feature = "u128")]
-pub type Pcg64Oneseq = OneseqXshRr12864;
+pub type Pcg64Oneseq = OneseqDXsM12864;
 /// A helper definition for a 64bit PCG which has a unique random stream for each instance
 #[cfg(feature = "u128")]
-pub type Pcg64Unique = UniqueXshRr12864;
+pub type Pcg64Unique = UniqueDXsM12864;
 /// A helper definition for a 64bit PCG which is fast but may lack statistical quality.
 ///
 /// This generator sacrifices quality for speed by utilizing a Multiplicative Congruential
@@ -386,7 +465,7 @@ where
     fn from_seed(mut seed: Self::Seed) -> Self {
         PcgEngine {
             state: seed.get(),
-            stream_mix: StreamMix::build(Some(&mut seed)),
+            stream_mix: StreamMix::build(Some(seed.get())),
             mul_mix: PhantomData::<MulMix>,
             out_mix: PhantomData::<OutMix>,
             phantom: PhantomData::<Xtype>,
@@ -458,4 +537,14 @@ impl SeedableRng for Pcg32Basic {
             inc: seed.get(),
         }
     }
+}
+
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct PCGStateInfo<Itype> {
+    pub state: Itype,
+    pub increment: Itype,
+    pub multiplier: Itype,
+    pub internal_width: usize,
+    pub output_width: usize,
+    pub output_mixin: String,
 }

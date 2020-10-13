@@ -24,14 +24,14 @@
  *     http://www.pcg-random.org
  */
 
-use num_traits::{FromPrimitive, One};
-use seeds::PcgSeeder;
+use num_traits::{FromPrimitive, One, Zero};
 
 /// A stream provides the increment to the LCG. This increment should be
 /// an odd number or the period of the generator will not be the full size
 /// of the state.
 pub trait Stream<Itype> {
-    fn build(seed: Option<&mut PcgSeeder<Itype>>) -> Self;
+    const SERIALIZER_ID: &'static str;
+    fn build(seed: Option<Itype>) -> Self;
 
     fn set_stream(&mut self, _stream_seq: Itype) {
         panic!("Stream setting unimplemented for this stream type");
@@ -45,13 +45,13 @@ pub trait Stream<Itype> {
 /// This sequence stream defines constants as provided by the PCG paper.
 /// This struct is implemented with a macro to provide values for each
 /// Stream<Itype>.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct OneSeqStream;
 
 macro_rules! make_one_seq {
     ( $( $t:ty => $e:expr);* ) => {
 		$(impl Stream<$t> for OneSeqStream {
-            fn build(_: Option<&mut PcgSeeder<$t>>) -> Self {
+            const SERIALIZER_ID: &'static str = "OneSeq";
+            fn build(_: Option<$t>) -> Self {
                 OneSeqStream
             }
 
@@ -76,13 +76,13 @@ make_one_seq! {
 /// This stream provides an increment of 0 to the LCG. This turns the
 /// LCG into a MCG, which while being less statistically sound than an LCG,
 /// it is faster.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct NoSeqStream;
 
 macro_rules! make_no_seq {
     ( $( $t:ty => $e:expr);* ) => {
 		$(impl Stream<$t> for NoSeqStream {
-            fn build(_: Option<&mut PcgSeeder<$t>>) -> Self {
+            const SERIALIZER_ID: &'static str = "NoSeq";
+            fn build(_: Option<$t>) -> Self {
                 NoSeqStream
             }
 
@@ -107,21 +107,30 @@ make_no_seq! {
 /// By default this stream provides the same stream as OneSeqStream. The
 /// advantage to this stream is it can be changed at runtime. This incurs an
 /// extra Itype of storage overhead.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct SpecificSeqStream<Itype> {
     inc: Itype,
+}
+
+impl<Itype> SpecificSeqStream<Itype>
+where
+    Itype: Zero,
+{
+    pub fn new() -> SpecificSeqStream<Itype> {
+        SpecificSeqStream { inc: Itype::zero() }
+    }
 }
 
 macro_rules! make_set_seq {
     ( $( $t:ident => $e:expr);* ) => {
         $(impl Stream<$t> for SpecificSeqStream<$t> {
-            fn build(seed: Option<&mut PcgSeeder<$t>>) -> Self {
+            const SERIALIZER_ID: &'static str = "SetSeq";
+            fn build(seed: Option<$t>) -> Self {
                 match seed {
                     None => SpecificSeqStream {
                                 inc : $e,
                             },
                     Some(seed) => SpecificSeqStream {
-                        inc: seed.get(),
+                        inc: seed,
                     },
                 }
 
@@ -153,14 +162,14 @@ make_set_seq! {
 /// generator in memory. This means that two PCG with the same seed
 /// can produce different sequences of numbers. Though if the generator is
 /// moved it will change the stream.
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct UniqueSeqStream;
 
 impl<Itype> Stream<Itype> for UniqueSeqStream
 where
     Itype: FromPrimitive + ::seeds::ReadByteOrder,
 {
-    fn build(_: Option<&mut PcgSeeder<Itype>>) -> Self {
+    const SERIALIZER_ID: &'static str = "Uniq";
+    fn build(_: Option<Itype>) -> Self {
         UniqueSeqStream
     }
 

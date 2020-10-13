@@ -323,6 +323,35 @@ where
     }
 }
 
+impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>
+where
+    Itype: PcgOps + Copy + One + Zero + Ord + Eq + std::ops::BitAnd<Itype, Output=Itype> + std::ops::ShrAssign,
+    StreamMix: Stream<Itype>,
+    MulMix: Multiplier<Itype>,
+    OutMix: OutputMixin<Itype, Xtype>,
+{
+    pub fn advance(&mut self, delta: Itype) {
+        let mut cur_mult = MulMix::multiplier();
+        let mut cur_plus = self.stream_mix.increment();
+        let mut delta = delta;
+        let mut acc_mult = Itype::one();
+        let mut acc_plus = Itype::zero();
+
+        while delta > Itype::zero() {
+            if (delta & Itype::one()) != Itype::zero() {
+                acc_mult = acc_mult.wrap_mul(cur_mult);
+                acc_plus = acc_plus.wrap_mul(cur_mult).wrap_add(cur_plus);
+            }
+
+            cur_plus = cur_mult.wrap_add(Itype::one()).wrap_mul(cur_plus);
+            cur_mult = cur_mult.wrap_mul(cur_mult);
+            delta >>= Itype::one();
+        }
+
+        self.state = acc_mult.wrap_mul(self.state).wrap_add(acc_plus);
+    }
+}
+
 pub type OneseqXshRs6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRsMixin>;
 pub type OneseqXshRr6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, XshRrMixin>;
 pub type OneseqDXsM6432 = PcgEngine<u64, u32, OneSeqStream, DefaultMultiplier, DXsMMixin>;

@@ -130,7 +130,7 @@ macro_rules! make_set_seq {
                                 inc : $e,
                             },
                     Some(seed) => SpecificSeqStream {
-                        inc: seed,
+                        inc: seed | $t::one(),
                     },
                 }
 

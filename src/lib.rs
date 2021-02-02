@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pcg_rand = "0.12.0"
+//! pcg_rand = "0.13.0"
 //! ```
 //! # Typename Nomenclature
 //! This library attempts to simplify using the PCG generators by defining easy
@@ -325,7 +325,14 @@ where
 
 impl<Itype, Xtype, StreamMix, MulMix, OutMix> PcgEngine<Itype, Xtype, StreamMix, MulMix, OutMix>
 where
-    Itype: PcgOps + Copy + One + Zero + Ord + Eq + std::ops::BitAnd<Itype, Output=Itype> + std::ops::ShrAssign,
+    Itype: PcgOps
+        + Copy
+        + One
+        + Zero
+        + Ord
+        + Eq
+        + std::ops::BitAnd<Itype, Output = Itype>
+        + std::ops::ShrAssign,
     StreamMix: Stream<Itype>,
     MulMix: Multiplier<Itype>,
     OutMix: OutputMixin<Itype, Xtype>,

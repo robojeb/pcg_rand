@@ -1,6 +1,6 @@
 [package]
 name = "pcg_rand"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["Jeb Brooks <jeb@robojeb.dev>"]
 
 homepage = "https://github.com/robojeb/pcg_rand"
@@ -30,8 +30,8 @@ name = "pcg_rand"
 path = "src/lib.rs"
 
 [dependencies]
-rand = { version="0.7"}
-rand_core = "0.5"
+rand = { version="0.8"}
+rand_core = "0.6"
 num-traits = { version="0.2" }
 byteorder = "1.2"
 serde = { version = "1", optional = true, features=["derive"]}
